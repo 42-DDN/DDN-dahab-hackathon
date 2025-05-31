@@ -1,4 +1,4 @@
-AINSTORMING
+BRAINSTORMING
 qr encoded item data
 AI to calculate possible future demand and recommendations based on previous sale data and whats available inhouse
 warehouse
