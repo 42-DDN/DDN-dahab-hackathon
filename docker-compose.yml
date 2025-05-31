@@ -9,6 +9,15 @@ services:
     networks:
       - app-network
 
+  features:
+    build: ./project-root/features
+    container_name: features
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+
+
 networks:
   app-network:
     driver: bridge
