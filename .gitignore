@@ -38,3 +38,8 @@ dump/
 # Logs
 logs/
 *.log
+
+# Features
+__pycache__
+project-root/features/imgs
+project-root/features/venv
