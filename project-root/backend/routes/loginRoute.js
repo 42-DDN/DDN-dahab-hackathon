@@ -1,7 +1,7 @@
 import { Router } from "express";
 import dotenv from "dotenv";
-import { Worker } from "../models/workerSchema.js"; // Assuming you have a Worker model defined
-import { authentication } from "../middleware/authentication";
+import { Worker } from "../models/workerModel.js"; // Assuming you have a Worker model defined
+import { authentication } from "../middleware/authentication.js";
 dotenv.config();
 const loginRouter = Router();
 

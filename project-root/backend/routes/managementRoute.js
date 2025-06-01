@@ -1,7 +1,7 @@
 import { Router } from "express";
 import Item from "../models/itemSchema.js";
 const managementRouter = Router();
-import { authentication } from "../middleware/authentication";
+import { authentication } from "../middleware/authentication.js";
 
 managementRouter.get("/", (req, res) => {
   console.log(req.session);
@@ -11,7 +11,7 @@ managementRouter.get("/", (req, res) => {
   });
 });
 
-managementRouter.post("/qr-getitem", authentication, async (req, res) => {
+managementRouter.post("/getitem", authentication, async (req, res) => {
   const { itemId } = req.body;
   if (!itemId) {
     return res.status(400).json({ message: "Item ID is required." });
@@ -28,19 +28,10 @@ managementRouter.post("/qr-getitem", authentication, async (req, res) => {
   }
 });
 
-managementRouter.post("/qr-newitem", authentication, async (req, res) => {
-  const {
-    category,
-    type,
-    karat,
-    weight,
-    origin,
-    buyPrice,
-    manufacturePrice,
-    sellerInfo,
-  } = req.body;
+managementRouter.post("/newitem", authentication, async (req, res) => {
+  const { type, karat, weight, origin, buyPrice, manufacturePrice } = req.body;
+  const sellerInfo = req.session.user.id;
   if (
-    !category ||
     !type ||
     !karat ||
     !weight ||
@@ -53,7 +44,6 @@ managementRouter.post("/qr-newitem", authentication, async (req, res) => {
   }
   try {
     const newItem = new Item({
-      category,
       type,
       karat,
       weight,
@@ -66,6 +56,16 @@ managementRouter.post("/qr-newitem", authentication, async (req, res) => {
     res.status(201).json(newItem);
   } catch (error) {
     console.error("Error creating item:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+managementRouter.get("/getallitems", authentication, async (req, res) => {
+  try {
+    const items = await Item.find().populate("sellerInfo", "name email");
+    res.status(200).json(items);
+  } catch (error) {
+    console.error("Error fetching items:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 });

@@ -1,10 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
 import { sellerRouter } from "./routes/sellRoute.js";
-import { adminRouter } from "./routes/loginRoute.js";
+import { loginRouter } from "./routes/loginRoute.js";
 import connectDB from "./config/db.js";
 import session from "express-session";
 import MongoStore from "connect-mongo";
+import { managementRouter } from "./routes/managementRoute.js";
 
 dotenv.config();
 const app = express();
@@ -29,7 +30,8 @@ app.use(
 );
 
 app.use("/api/seller", sellerRouter);
-app.use("/api/admin", adminRouter);
+app.use("/api/auth", loginRouter);
+app.use("/api/management", managementRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on PORT: ${PORT}`);
