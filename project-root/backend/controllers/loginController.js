@@ -1,5 +1,6 @@
 import Worker from "../models/workerModel.js";
 import dotenv from "dotenv";
+import bcrypt from "bcrypt";
 dotenv.config();
 
 const login = async (req, res) => {
@@ -17,10 +18,12 @@ const login = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const isPasswordValid = await user.comparePassword(password);
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+
     if (user.role !== "seller") {
       return res.status(403).json({ message: "Access denied. Not a seller." });
     }
@@ -47,10 +50,12 @@ const signup = async (req, res) => {
       return res.status(409).json({ message: "User already exists" });
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUser = new Worker({
       name,
       email,
-      password,
+      password: hashedPassword,
       role,
     });
 
