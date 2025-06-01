@@ -1,6 +1,6 @@
 import Transaction from "../models/transactionSchema.js";
 import Item from "../models/itemSchema.js";
-import Worker from "../models/workerSchema.js";
+import Worker from "../models/workerModel.js";
 import dotenv from "dotenv";
 
 dotenv.config();

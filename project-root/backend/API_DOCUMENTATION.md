@@ -45,13 +45,13 @@ This API uses session-based authentication. After logging in, the session cookie
 }
 ```
 
-**Success Response (Admin):**
+**Success Response:**
 
 ```json
 {
   "message": "Login successful",
   "user": {
-    "email": "admin@example.com",
+    "email": "admin@admin.com",
     "role": "admin"
   }
 }
@@ -71,9 +71,10 @@ This API uses session-based authentication. After logging in, the session cookie
 
 **Error Responses:**
 
-- `404` - User not found
+- `400` - All fields are required  
 - `401` - Invalid credentials
-- `403` - Access denied (not a seller when trying seller login)
+- `403` - Access denied. Not a seller
+- `404` - User not found
 - `500` - Internal server error
 
 ### 3. User Registration
@@ -156,7 +157,7 @@ This API uses session-based authentication. After logging in, the session cookie
 - **URL:** `/api/seller/transaction`
 - **Method:** `POST`
 - **Auth Required:** Yes (Session required)
-- **Description:** Processes a gold transaction with multiple items
+- **Description:** Processes a gold transaction with multiple items, marks items as sold, and creates a transaction record
 
 **Request Body:**
 
@@ -176,7 +177,7 @@ This API uses session-based authentication. After logging in, the session cookie
 
 **Request Parameters:**
 
-- `itemIds`: Array of item ObjectIds (required)
+- `itemIds`: Array of item ObjectIds (required) - Items to be sold
 - `paymentMethod`: String (required) - Payment type (e.g., "cash", "card", "bank transfer")
 - `tax`: Number (required) - Tax amount, must be >= 0
 - `goldPrice`: Number (required) - Current gold price per gram, must be >= 0
@@ -201,12 +202,52 @@ This API uses session-based authentication. After logging in, the session cookie
 **Error Responses:**
 
 - `400` - Invalid or missing item IDs (must be non-empty array)
+- `400` - Item already sold for ID: {id}
 - `400` - Invalid or missing payment method
 - `400` - Invalid or missing tax (must be number >= 0)
 - `400` - Invalid or missing gold price (must be number >= 0)
 - `401` - Unauthorized (session required)
-- `404` - Item not found for one of the provided IDs
+- `404` - Item not found for ID: {id}
 - `404` - Worker not found (session user not found)
+- `500` - Internal server error
+
+### 3. Get All Transactions
+
+- **URL:** `/api/seller/get-all-transactions`
+- **Method:** `GET`
+- **Auth Required:** Yes (Session required)
+- **Description:** Retrieves all transactions with populated item details
+
+**Success Response:**
+
+```json
+[
+  {
+    "_id": "66f1a2b3c4d5e6f7a8b9c0d1",
+    "soldItems": [
+      {
+        "_id": "66f1a2b3c4d5e6f7a8b9c0d2",
+        "type": "Ring",
+        "karat": "24k",
+        "weight": 10.5,
+        "origin": "Dubai",
+        "buyPrice": 500,
+        "manufacturePrice": 600,
+        "sold": true
+      }
+    ],
+    "paymentType": "cash",
+    "tax": 15.5,
+    "goldPrice": 65.5,
+    "totalPrice": 1500.75,
+    "dateOfSale": "2025-06-01T10:30:00.000Z"
+  }
+]
+```
+
+**Error Responses:**
+
+- `401` - Unauthorized (session required)
 - `500` - Internal server error
 
 ---
@@ -269,7 +310,7 @@ This API uses session-based authentication. After logging in, the session cookie
 
 - **URL:** `/api/management/newitem`
 - **Method:** `POST`
-- **Auth Required:** Yes
+- **Auth Required:** Yes (Admin only)
 - **Description:** Creates a new gold item in the inventory
 
 **Request Body:**
@@ -289,14 +330,18 @@ This API uses session-based authentication. After logging in, the session cookie
 
 ```json
 {
-  "_id": "66f1a2b3c4d5e6f7a8b9c0d1",
-  "type": "Ring",
-  "karat": "24k",
-  "weight": 10.5,
-  "origin": "Dubai",
-  "buyPrice": 500,
-  "manufacturePrice": 600,
-  "sellerInfo": "66f1a2b3c4d5e6f7a8b9c0d2"
+  "message": "Item created successfully",
+  "item": {
+    "_id": "66f1a2b3c4d5e6f7a8b9c0d1",
+    "type": "Ring",
+    "karat": "24k",
+    "weight": 10.5,
+    "origin": "Dubai",
+    "buyPrice": 500,
+    "manufacturePrice": 600,
+    "sellerInfo": "66f1a2b3c4d5e6f7a8b9c0d2",
+    "sold": false
+  }
 }
 ```
 
@@ -312,7 +357,7 @@ This API uses session-based authentication. After logging in, the session cookie
 **Error Responses:**
 
 - `400` - All fields are required
-- `401` - Unauthorized access. Please log in
+- `403` - Forbidden access. Admins only
 - `500` - Internal server error
 
 ### 4. Get All Items
@@ -363,7 +408,8 @@ This API uses session-based authentication. After logging in, the session cookie
   "origin": "String (required)",
   "buyPrice": "Number (required)",
   "manufacturePrice": "Number (required)",
-  "sellerInfo": "ObjectId (ref: Worker, required)"
+  "sellerInfo": "ObjectId (ref: Worker, required)",
+  "sold": "Boolean (default: false)"
 }
 ```
 
@@ -386,13 +432,12 @@ This API uses session-based authentication. After logging in, the session cookie
 ```json
 {
   "_id": "ObjectId",
-  "soldItems": ["ObjectId (ref: Item, required)"],
-  "paymentType": "String (required)",
-  "tax": "Number (required, min: 0)",
+  "dateOfSale": "Date (default: now)",
   "goldPrice": "Number (required, min: 0)",
-  "totalPrice": "Number",
-  "createdAt": "Date (default: now)",
-  "updatedAt": "Date (default: now)"
+  "paymentType": "String (required, enum: ['cash', 'card', 'bank transfer'])",
+  "soldItems": ["ObjectId (ref: Item, required)"],
+  "tax": "Number (required, min: 0)",
+  "totalPrice": "Number (required)"
 }
 ```
 
@@ -431,7 +476,7 @@ The API uses express-session with MongoDB store. Sessions are stored in the data
 
 **Admin Credentials:**
 
-- Email: `admin@example.com`
+- Email: `admin@admin.com`
 - Password: Environment variable `ADMIN_PASSWORD`
 
 ---
@@ -444,7 +489,7 @@ The API uses express-session with MongoDB store. Sessions are stored in the data
 curl -X POST http://localhost:3200/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@example.com",
+    "email": "admin@admin.com",
     "password": "forgodsake"
   }'
 ```
