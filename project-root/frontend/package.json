@@ -15,6 +15,7 @@
     "date-fns": "^2.30.0",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
+    "jsqr": "^1.4.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-qr-reader": "^3.0.0-beta-1",

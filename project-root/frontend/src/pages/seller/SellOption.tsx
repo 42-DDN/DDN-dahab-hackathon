@@ -18,115 +18,167 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  MenuItem,
+  IconButton,
 } from '@mui/material';
-import { Print as PrintIcon } from '@mui/icons-material';
+import { Print as PrintIcon, AddCircleOutline as AddIcon, RemoveCircleOutline as RemoveIcon } from '@mui/icons-material';
+import { useInvoices, Invoice } from '../../contexts/InvoiceContext';
+import { useFees } from '../../contexts/FeesContext';
+import { useInventory, InventoryItem } from '../../contexts/InventoryContext';
 
-interface Invoice {
-  id: string;
-  date: string;
-  type: 'sell';
-  itemType: string;
-  karat?: string;
-  weight: number;
-  price: number;
-  manufacturingPrice: number;
-  tax: number;
-  totalPrice: number;
-  description: string;
-  status: 'pending' | 'completed' | 'cancelled';
+interface SellInvoiceItem extends Omit<InventoryItem, 'location'> {
+  manufacturingPricePerGram?: number;
+  taxApplied?: number;
 }
 
-const karats = ['14K', '18K', '21K', '24K'];
+interface SellInvoice extends Omit<Invoice, 'itemType' | 'karat' | 'weight' | 'price' | 'manufacturingPrice' | 'tax' | 'description' | 'totalPrice'> {
+  items: SellInvoiceItem[];
+  subtotal: number;
+  totalTax: number;
+  grandTotal: number;
+  description?: string;
+}
 
 const SellOption: React.FC = () => {
-  const [formData, setFormData] = useState({
-    itemType: '',
-    karat: '',
-    weight: '',
-    price: '',
-    manufacturingPrice: '',
-    taxRate: '',
-    description: '',
-  });
+  const { addInvoice } = useInvoices();
+  const { taxRates } = useFees();
+  const { getInventoryItemById } = useInventory();
 
+  const [itemId, setItemId] = useState('');
+  const [foundItem, setFoundItem] = useState<InventoryItem | undefined>(undefined);
+  const [selectedItems, setSelectedItems] = useState<SellInvoiceItem[]>([]);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   });
 
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [invoice, setInvoice] = useState<SellInvoice | null>(null);
   const [openInvoiceDialog, setOpenInvoiceDialog] = useState(false);
 
-  const handleInputChange = (field: string) => (
-    event: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
-  ) => {
-    setFormData({
-      ...formData,
-      [field]: event.target.value,
+  const handleItemIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setItemId(event.target.value);
+    setFoundItem(undefined);
+  };
+
+  const handleSearchItem = () => {
+    const item = getInventoryItemById(itemId);
+    if (item) {
+      setFoundItem(item);
+      setSnackbar({
+        open: true,
+        message: 'Item found!',
+        severity: 'success',
+      });
+    } else {
+      setFoundItem(undefined);
+      setSnackbar({
+        open: true,
+        message: 'Item not found.',
+        severity: 'error',
+      });
+    }
+  };
+
+  const handleAddItemToSale = () => {
+    if (foundItem) {
+      const manufacturingPriceInput = prompt(`Enter manufacturing price per gram for ${foundItem.itemType} (${foundItem.karat}) (JD):`);
+      const manufacturingPrice = manufacturingPriceInput ? parseFloat(manufacturingPriceInput) : undefined; // Allow undefined
+
+      if (manufacturingPrice !== undefined && isNaN(manufacturingPrice)) {
+        setSnackbar({
+          open: true,
+          message: 'Invalid manufacturing price entered.',
+          severity: 'error',
+        });
+        return;
+      }
+
+      const taxRate = taxRates.vat + taxRates.customs + taxRates.otherTaxes;
+      const itemSubtotal = (foundItem.weight * foundItem.price) + (manufacturingPrice !== undefined ? foundItem.weight * manufacturingPrice : 0);
+      const itemTax = itemSubtotal * (taxRate / 100);
+
+      const sellInvoiceItem: SellInvoiceItem = {
+        ...foundItem,
+        manufacturingPricePerGram: manufacturingPrice,
+        taxApplied: itemTax,
+      };
+
+      setSelectedItems(prev => [...prev, sellInvoiceItem]);
+      setItemId('');
+      setFoundItem(undefined);
+      setSnackbar({
+        open: true,
+        message: `${foundItem.itemType} added to sale!`,
+        severity: 'success',
+      });
+    }
+  };
+
+  const handleRemoveItemFromSale = (id: string) => {
+    setSelectedItems(prev => prev.filter(item => item.id !== id));
+    setSnackbar({
+      open: true,
+      message: 'Item removed from sale.',
+      severity: 'info',
     });
   };
 
-  const calculateTotalPrice = (weight: number, price: number, manufacturingPrice: number, taxRate: number) => {
-    const totalManufacturingPrice = weight * manufacturingPrice;
-    const subtotal = (weight * price) + totalManufacturingPrice;
-    const tax = subtotal * (taxRate / 100);
-    return {
-      manufacturingPrice: totalManufacturingPrice,
-      tax,
-      totalPrice: subtotal + tax
-    };
-  };
-
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmitSale = (event: React.FormEvent) => {
     event.preventDefault();
-    
-    if (!formData.itemType || !formData.karat || !formData.weight || !formData.price || !formData.manufacturingPrice || !formData.taxRate) {
+
+    if (selectedItems.length === 0) {
       setSnackbar({
         open: true,
-        message: 'Please fill in all required fields',
+        message: 'Please add items to the sale first.',
         severity: 'error',
       });
       return;
     }
 
-    const weight = parseFloat(formData.weight);
-    const price = parseFloat(formData.price);
-    const manufacturingPrice = parseFloat(formData.manufacturingPrice);
-    const taxRate = parseFloat(formData.taxRate);
-    const { manufacturingPrice: totalManufacturingPrice, tax, totalPrice } = calculateTotalPrice(weight, price, manufacturingPrice, taxRate);
+    const subtotal = selectedItems.reduce((sum, item) => sum + ((item.weight * item.price) + (item.manufacturingPricePerGram !== undefined ? item.weight * item.manufacturingPricePerGram : 0)), 0);
+    const totalTax = selectedItems.reduce((sum, item) => sum + (item.taxApplied || 0), 0);
+    const grandTotal = subtotal + totalTax;
 
-    const newInvoice: Invoice = {
-      id: `INV${Date.now()}`,
+    const newInvoice: SellInvoice = {
+      id: `INV-SELL-${Date.now()}`,
       date: new Date().toISOString(),
       type: 'sell',
-      itemType: formData.itemType,
-      karat: formData.karat,
-      weight,
-      price,
-      manufacturingPrice: totalManufacturingPrice,
-      tax,
-      totalPrice,
-      description: formData.description,
+      items: selectedItems,
+      subtotal,
+      totalTax,
+      grandTotal,
       status: 'pending',
+      description: 'Sale transaction',
     };
 
+      const baseInvoice: Invoice = {
+       id: newInvoice.id,
+       date: newInvoice.date,
+       type: 'sell',
+       itemType: newInvoice.items.map(item => item.itemType).join(', '),
+       karat: newInvoice.items.map(item => item.karat).join(', '),
+       weight: newInvoice.items.reduce((sum, item) => sum + item.weight, 0),
+       price: newInvoice.items.reduce((sum, item) => sum + (item.weight * item.price), 0),
+       manufacturingPrice: newInvoice.items.reduce((sum, item) => sum + (item.manufacturingPricePerGram !== undefined ? item.weight * item.manufacturingPricePerGram : 0), 0),
+       tax: newInvoice.totalTax,
+       totalPrice: newInvoice.grandTotal,
+       description: newInvoice.description || '',
+       status: newInvoice.status,
+    };
+
+    addInvoice(baseInvoice);
     setInvoice(newInvoice);
     setOpenInvoiceDialog(true);
+
     setSnackbar({
       open: true,
-      message: 'Sell request submitted successfully',
+      message: 'Sell invoice generated successfully!',
       severity: 'success',
     });
 
-    setFormData(prev => ({
-      ...prev,
-      itemType: '',
-      weight: '',
-      price: '',
-      description: '',
-    }));
+    setItemId('');
+    setFoundItem(undefined);
+    setSelectedItems([]);
   };
 
   const handleCloseSnackbar = () => {
@@ -135,6 +187,7 @@ const SellOption: React.FC = () => {
 
   const handleCloseInvoiceDialog = () => {
     setOpenInvoiceDialog(false);
+    setInvoice(null);
   };
 
   const handlePrintInvoice = () => {
@@ -148,17 +201,15 @@ const SellOption: React.FC = () => {
       </Typography>
 
       <Paper sx={{ p: 3 }}>
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
+        <form onSubmit={handleSubmitSale}> {/* Use the new submit handler */}
+          <Grid container spacing={3} alignItems="center">
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Item Type"
-                value={formData.itemType}
-                onChange={handleInputChange('itemType')}
-                placeholder="e.g., Ring, Necklace, Bracelet"
-                helperText="Enter the type of item you want to sell"
-                required
+                label="Enter Item ID"
+                value={itemId}
+                onChange={handleItemIdChange}
+                placeholder="e.g., ITEM-001"
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     '&:hover fieldset': {
@@ -168,129 +219,12 @@ const SellOption: React.FC = () => {
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                select
-                fullWidth
-                label="Karat"
-                value={formData.karat}
-                onChange={handleInputChange('karat')}
-                required
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: 'secondary.main',
-                    },
-                  },
-                }}
-              >
-                <MenuItem value="">Select Karat</MenuItem>
-                {karats.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Weight (grams)"
-                type="number"
-                value={formData.weight}
-                onChange={handleInputChange('weight')}
-                InputProps={{
-                  inputProps: { min: 0, step: 0.01 }
-                }}
-                required
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: 'secondary.main',
-                    },
-                  },
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Price per gram (JD)"
-                type="number"
-                value={formData.price}
-                onChange={handleInputChange('price')}
-                InputProps={{
-                  inputProps: { min: 0, step: 0.01 }
-                }}
-                required
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: 'secondary.main',
-                    },
-                  },
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Manufacturing Price per gram (JD)"
-                type="number"
-                value={formData.manufacturingPrice}
-                onChange={handleInputChange('manufacturingPrice')}
-                InputProps={{
-                  inputProps: { min: 0, step: 0.01 }
-                }}
-                required
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: 'secondary.main',
-                    },
-                  },
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Tax Rate (%)"
-                type="number"
-                value={formData.taxRate}
-                onChange={handleInputChange('taxRate')}
-                InputProps={{
-                  inputProps: { min: 0, step: 0.01 }
-                }}
-                required
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: 'secondary.main',
-                    },
-                  },
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                value={formData.description}
-                onChange={handleInputChange('description')}
-                multiline
-                rows={4}
-                placeholder="Enter any additional details about the item"
-              />
-            </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} md={3}>
               <Button
-                type="submit"
                 variant="contained"
-                color="primary"
-                size="large"
+                onClick={handleSearchItem}
+                disabled={!itemId}
                 fullWidth
-                disabled={!formData.karat || !formData.weight || !formData.price || !formData.manufacturingPrice || !formData.taxRate}
                 sx={{
                   backgroundColor: 'primary.main',
                   border: '2px solid transparent',
@@ -300,7 +234,125 @@ const SellOption: React.FC = () => {
                   },
                 }}
               >
-                Submit Sell Request
+                Search Item
+              </Button>
+            </Grid>
+             <Grid item xs={12} md={3}> {/* New Grid item for Add button */}
+              <Button
+                variant="contained"
+                onClick={handleAddItemToSale}
+                disabled={!foundItem}
+                fullWidth
+                 startIcon={<AddIcon />}
+                sx={{
+                  backgroundColor: 'success.main',
+                  border: '2px solid transparent',
+                  '&:hover': {
+                    backgroundColor: 'success.dark',
+                    borderColor: 'secondary.main',
+                  },
+                }}
+              >
+                Add to Sale
+              </Button>
+            </Grid>
+
+            {foundItem && (
+              <Grid item xs={12}> {/* Display details of the currently found item */}
+                 <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                  Found Item Details:
+                </Typography>
+                 <TableContainer component={Paper}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Item ID</TableCell>
+                        <TableCell>Item Type</TableCell>
+                        <TableCell>Karat</TableCell>
+                        <TableCell>Weight (g)</TableCell>
+                        <TableCell>Price (JD)</TableCell>
+                        <TableCell>Description</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>{foundItem.id}</TableCell>
+                        <TableCell>{foundItem.itemType}</TableCell>
+                        <TableCell>{foundItem.karat}</TableCell>
+                        <TableCell>{foundItem.weight.toFixed(2)}</TableCell>
+                        <TableCell>{foundItem.price.toFixed(2)}</TableCell>
+                        <TableCell>{foundItem.description || 'N/A'}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+            )}
+
+            {selectedItems.length > 0 && (
+              <Grid item xs={12}> {/* Display table of selected items */}
+                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                  Items for Sale:
+                </Typography>
+                <TableContainer component={Paper}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Item ID</TableCell>
+                        <TableCell>Item Type</TableCell>
+                        <TableCell>Karat</TableCell>
+                        <TableCell>Weight (g)</TableCell>
+                        <TableCell>Price (JD)</TableCell>
+                        <TableCell>Mfg. Price (JD/g)</TableCell>
+                        <TableCell>Item Subtotal (JD)</TableCell>
+                        <TableCell>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {selectedItems.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.id}</TableCell>
+                          <TableCell>{item.itemType}</TableCell>
+                          <TableCell>{item.karat}</TableCell>
+                          <TableCell>{item.weight.toFixed(2)}</TableCell>
+                          <TableCell>{item.price.toFixed(2)}</TableCell>
+                          <TableCell>{item.manufacturingPricePerGram?.toFixed(2) || 'N/A'}</TableCell>
+                          <TableCell>{((item.weight * item.price) + (item.manufacturingPricePerGram !== undefined ? item.weight * item.manufacturingPricePerGram : 0)).toFixed(2)}</TableCell>
+                           <TableCell>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleRemoveItemFromSale(item.id)}
+                              color="error"
+                            >
+                              <RemoveIcon />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+            )}
+
+            <Grid item xs={12}> {/* Submit button for the entire sale */}
+               <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                size="large"
+                fullWidth
+                disabled={selectedItems.length === 0}
+                sx={{
+                  backgroundColor: 'primary.main',
+                  border: '2px solid transparent',
+                  '&:hover': {
+                    backgroundColor: 'primary.dark',
+                    borderColor: 'secondary.main',
+                  },
+                }}
+              >
+                Generate Sell Invoice
               </Button>
             </Grid>
           </Grid>
@@ -332,42 +384,57 @@ const SellOption: React.FC = () => {
           {invoice && (
             <TableContainer>
               <Table>
-                <TableBody>
+                <TableHead>
                   <TableRow>
+                    <TableCell>Invoice ID</TableCell>
+                    <TableCell align="right">{invoice.id}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Date</TableCell>
+                    <TableCell align="right">{new Date(invoice.date).toLocaleDateString()}</TableCell>
+                  </TableRow>
+                  {/* Display selected items */}
+                  <TableRow>
+                    <TableCell colSpan={8}><Typography variant="h6" sx={{ mt: 2 }}>Items Included:</Typography></TableCell>
+                  </TableRow>
+                   <TableRow>
+                    <TableCell>Item ID</TableCell>
                     <TableCell>Item Type</TableCell>
-                    <TableCell align="right">{invoice.itemType}</TableCell>
-                  </TableRow>
-                  <TableRow>
                     <TableCell>Karat</TableCell>
-                    <TableCell align="right">{invoice.karat}</TableCell>
+                    <TableCell>Weight (g)</TableCell>
+                    <TableCell>Price (JD/g)</TableCell>
+                    <TableCell>Mfg. Price (JD/g)</TableCell>
+                    <TableCell>Item Subtotal (JD)</TableCell>
+                    <TableCell>Item Tax (JD)</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {invoice.items.map(item => (
+                     <TableRow key={item.id}>
+                      <TableCell>{item.id}</TableCell>
+                      <TableCell>{item.itemType}</TableCell>
+                      <TableCell>{item.karat}</TableCell>
+                      <TableCell>{item.weight.toFixed(2)}</TableCell>
+                      <TableCell>{item.price.toFixed(2)}</TableCell>
+                      <TableCell>{item.manufacturingPricePerGram?.toFixed(2) || 'N/A'}</TableCell>
+                      <TableCell>{((item.weight * item.price) + (item.manufacturingPricePerGram !== undefined ? item.weight * item.manufacturingPricePerGram : 0)).toFixed(2)}</TableCell>
+                      <TableCell>{item.taxApplied?.toFixed(2) || 'N/A'}</TableCell>
+                    </TableRow>
+                  ))}
+                   {/* Display totals */}
+                  <TableRow
+                    sx={{ borderTop: '2px solid #ccc' }}
+                  >
+                    <TableCell colSpan={8} align="right"><strong>Subtotal:</strong></TableCell>
+                    <TableCell align="right"><strong>{invoice.subtotal.toFixed(2)} JD</strong></TableCell>
+                  </TableRow>
+                   <TableRow>
+                    <TableCell colSpan={8} align="right"><strong>Total Tax ({taxRates.vat + taxRates.customs + taxRates.otherTaxes}%):</strong></TableCell>
+                    <TableCell align="right"><strong>{invoice.totalTax.toFixed(2)} JD</strong></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell>Weight (grams)</TableCell>
-                    <TableCell align="right">{invoice.weight}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Price per gram</TableCell>
-                    <TableCell align="right">{invoice.price.toFixed(2)} JD</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Base Price</TableCell>
-                    <TableCell align="right">{invoice.weight * invoice.price} JD</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Manufacturing Price ({formData.manufacturingPrice} JD/gram)</TableCell>
-                    <TableCell align="right">{invoice.manufacturingPrice} JD</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Subtotal</TableCell>
-                    <TableCell align="right">{invoice.weight * invoice.price + invoice.manufacturingPrice} JD</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Tax ({formData.taxRate}%)</TableCell>
-                    <TableCell align="right">{invoice.tax.toFixed(2)} JD</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell><strong>Total Price</strong></TableCell>
-                    <TableCell align="right"><strong>{invoice.totalPrice.toFixed(2)} JD</strong></TableCell>
+                    <TableCell colSpan={8} align="right"><strong>Grand Total:</strong></TableCell>
+                    <TableCell align="right"><strong>{invoice.grandTotal.toFixed(2)} JD</strong></TableCell>
                   </TableRow>
                 </TableBody>
               </Table>

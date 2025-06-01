@@ -4,6 +4,9 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme/theme';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { InvoiceProvider } from './contexts/InvoiceContext';
+import { FeesProvider } from './contexts/FeesContext';
+import { InventoryProvider } from './contexts/InventoryContext';
 import Login from './pages/Login';
 import AdminLayout from './layouts/AdminLayout';
 import SellerLayout from './layouts/SellerLayout';
@@ -45,45 +48,51 @@ const App: React.FC = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          
-          {/* Admin Routes */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<AdminDashboard />} />
-            <Route path="sellers" element={<SellerManagement />} />
-            <Route path="fees" element={<FeesManagement />} />
-            <Route path="inventory" element={<InventoryManagement />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
+        <InvoiceProvider>
+          <FeesProvider>
+            <InventoryProvider>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                
+                {/* Admin Routes */}
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <AdminLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="sellers" element={<SellerManagement />} />
+                  <Route path="fees" element={<FeesManagement />} />
+                  <Route path="inventory" element={<InventoryManagement />} />
+                  <Route path="settings" element={<Settings />} />
+                </Route>
 
-          {/* Seller Routes */}
-          <Route
-            path="/seller"
-            element={
-              <ProtectedRoute allowedRoles={['seller', 'admin']}>
-                <SellerLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<SellerHome />} />
-            <Route path="home" element={<SellerHome />} />
-            <Route path="buy" element={<BuyOption />} />
-            <Route path="sell" element={<SellOption />} />
-            <Route path="invoices" element={<InvoiceManagement />} />
-            <Route path="inventory" element={<Inventory />} />
-          </Route>
+                {/* Seller Routes */}
+                <Route
+                  path="/seller"
+                  element={
+                    <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                      <SellerLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<SellerHome />} />
+                  <Route path="home" element={<SellerHome />} />
+                  <Route path="buy" element={<BuyOption />} />
+                  <Route path="sell" element={<SellOption />} />
+                  <Route path="invoices" element={<InvoiceManagement />} />
+                  <Route path="inventory" element={<Inventory />} />
+                </Route>
 
-          {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/login" />} />
-        </Routes>
+                {/* Default redirect */}
+                <Route path="/" element={<Navigate to="/login" />} />
+              </Routes>
+            </InventoryProvider>
+          </FeesProvider>
+        </InvoiceProvider>
       </AuthProvider>
     </ThemeProvider>
   );
