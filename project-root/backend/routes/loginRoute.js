@@ -15,6 +15,6 @@ loginRouter.post("/login", login);
 
 loginRouter.post("/signup", signup);
 
-loginRouter.post("/logout", authentication, logout);
+loginRouter.get("/logout", authentication, logout);
 
 export { loginRouter };
