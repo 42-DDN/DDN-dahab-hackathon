@@ -15,33 +15,10 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-
-interface ManufacturingFees {
-  [key: string]: {
-    manufacturingFee: number;
-    wastageRate: number;
-  };
-}
-
-interface TaxRates {
-  vat: number;
-  customs: number;
-  otherTaxes: number;
-}
+import { useFees } from '../../contexts/FeesContext';
 
 const FeesManagement: React.FC = () => {
-  const [manufacturingFees, setManufacturingFees] = useState<ManufacturingFees>({
-    '14K': { manufacturingFee: 5, wastageRate: 2 },
-    '18K': { manufacturingFee: 7, wastageRate: 2.5 },
-    '21K': { manufacturingFee: 9, wastageRate: 3 },
-    '24K': { manufacturingFee: 12, wastageRate: 3.5 },
-  });
-
-  const [taxRates, setTaxRates] = useState<TaxRates>({
-    vat: 15,
-    customs: 5,
-    otherTaxes: 2,
-  });
+  const { manufacturingFees, taxRates, updateManufacturingFee, updateTaxRate } = useFees();
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -49,35 +26,25 @@ const FeesManagement: React.FC = () => {
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   });
 
-  const handleManufacturingFeeChange = (karat: string, field: keyof ManufacturingFees[string]) => (
+  const handleManufacturingFeeChange = (karat: keyof typeof manufacturingFees, field: keyof typeof manufacturingFees[typeof karat]) => (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const value = parseFloat(event.target.value);
     if (!isNaN(value)) {
-      setManufacturingFees((prev) => ({
-        ...prev,
-        [karat]: {
-          ...prev[karat],
-          [field]: value,
-        },
-      }));
+      updateManufacturingFee(karat, field, value);
     }
   };
 
-  const handleTaxRateChange = (field: keyof TaxRates) => (
+  const handleTaxRateChange = (field: keyof typeof taxRates) => (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const value = parseFloat(event.target.value);
     if (!isNaN(value)) {
-      setTaxRates((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
+      updateTaxRate(field, value);
     }
   };
 
   const handleSave = () => {
-    // TODO: Implement API call to save fees
     setSnackbar({
       open: true,
       message: 'Fees and tax rates updated successfully',
@@ -120,7 +87,7 @@ const FeesManagement: React.FC = () => {
                     <TextField
                       type="number"
                       value={fees.manufacturingFee}
-                      onChange={handleManufacturingFeeChange(karat, 'manufacturingFee')}
+                      onChange={handleManufacturingFeeChange(karat as keyof typeof manufacturingFees, 'manufacturingFee')}
                       InputProps={{
                         endAdornment: '%',
                       }}
@@ -137,7 +104,7 @@ const FeesManagement: React.FC = () => {
                     <TextField
                       type="number"
                       value={fees.wastageRate}
-                      onChange={handleManufacturingFeeChange(karat, 'wastageRate')}
+                      onChange={handleManufacturingFeeChange(karat as keyof typeof manufacturingFees, 'wastageRate')}
                       InputProps={{
                         endAdornment: '%',
                       }}

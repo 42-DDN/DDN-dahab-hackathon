@@ -32,6 +32,10 @@ const SellerHome: React.FC = () => {
     }
   };
 
+  const handleCloseQRScanner = () => {
+    setQrScannerOpen(false);
+  };
+
   const quickActions = [
     {
       title: 'Scan QR Code',
@@ -127,7 +131,7 @@ const SellerHome: React.FC = () => {
 
       <QRScanner
         open={qrScannerOpen}
-        onClose={() => setQrScannerOpen(false)}
+        onClose={handleCloseQRScanner}
         onScan={handleQRScan}
       />
     </Box>

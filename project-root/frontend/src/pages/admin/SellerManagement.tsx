@@ -65,7 +65,7 @@ const SellerManagement: React.FC = () => {
       name: 'John Doe',
       email: 'john@example.com',
       phone: '+1234567890',
-      password: '********', // Masked password
+      password: '********',
       status: 'active',
     },
     {
@@ -73,7 +73,7 @@ const SellerManagement: React.FC = () => {
       name: 'Jane Smith',
       email: 'jane@example.com',
       phone: '+0987654321',
-      password: '********', // Masked password
+      password: '********',
       status: 'active',
     },
   ]);
@@ -97,7 +97,7 @@ const SellerManagement: React.FC = () => {
       setSelectedSeller(seller);
       setFormData({
         ...seller,
-        password: '', // Clear password when editing
+        password: '',
       });
     } else {
       setSelectedSeller(null);
@@ -142,7 +142,6 @@ const SellerManagement: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    // Validate form data
     if (!formData.name || !formData.email || !formData.phone) {
       setSnackbar({
         open: true,
@@ -152,7 +151,6 @@ const SellerManagement: React.FC = () => {
       return;
     }
 
-    // For new sellers, require password
     if (!selectedSeller && !formData.password) {
       setSnackbar({
         open: true,
@@ -163,20 +161,18 @@ const SellerManagement: React.FC = () => {
     }
 
     if (selectedSeller) {
-      // Update existing seller
       setMockSellers(prevSellers =>
         prevSellers.map(seller =>
           seller.id === selectedSeller.id
             ? {
                 ...seller,
                 ...formData,
-                password: formData.password || seller.password, // Keep existing password if not changed
+                password: formData.password || seller.password,
               }
             : seller
         )
       );
     } else {
-      // Add new seller
       const newSeller: Seller = {
         id: generateSellerId(mockSellers),
         name: formData.name!,

@@ -29,7 +29,6 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      // Add role prefix to username based on login type
       const usernameWithRole = `${loginType}_${username}`;
       const path = await login(usernameWithRole, password);
       navigate(path);
@@ -71,8 +70,8 @@ const Login: React.FC = () => {
             src="/unnamed.png"
             alt="Dahab JO Logo"
             sx={{
-              height: 100, // Adjust height as needed
-              mb: 2, // Keep some margin below the logo
+              height: 100,
+              mb: 2,
             }}
           />
           

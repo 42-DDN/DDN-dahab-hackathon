@@ -10,9 +10,9 @@ import {
   TableHead,
   TableRow,
   TablePagination,
-  IconButton,
   Button,
   TextField,
+  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -23,78 +23,115 @@ import {
   Snackbar,
 } from '@mui/material';
 import {
-  Search as SearchIcon,
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-
-interface InventoryItem {
-  id: string;
-  name: string;
-  type: string;
-  karat?: string;
-  weight: number;
-  price: number;
-  status: 'available' | 'sold' | 'pending';
-  location: string;
-}
-
-const initialItems: InventoryItem[] = [
-  {
-    id: '1',
-    name: 'Gold Ring',
-    type: 'Ring',
-    weight: 10.5,
-    price: 5000,
-    status: 'available',
-    location: 'Vault A',
-  },
-  {
-    id: '2',
-    name: 'Silver Necklace',
-    type: 'Necklace',
-    weight: 25.0,
-    price: 750,
-    status: 'available',
-    location: 'Vault B',
-  },
-];
+import { useInventory, InventoryItem } from '../../contexts/InventoryContext';
 
 const karats = ['14K', '18K', '21K', '24K'];
 
 const InventoryManagement: React.FC = () => {
+  const { inventory, addInventoryItem, updateInventoryItem, deleteInventoryItem } = useInventory();
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
-  const [mockItems, setMockItems] = useState<InventoryItem[]>(initialItems);
-
-  interface FormData {
-    name: string;
-    type: string;
-    karat?: string;
-    weight: string;
-    price: string;
-    status: 'available' | 'sold' | 'pending';
-    location: string;
-  }
-
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    type: '',
+  const [formData, setFormData] = useState<Omit<InventoryItem, 'id' | 'location'>>({
+    itemType: '',
     karat: '',
-    weight: '',
-    price: '',
-    status: 'available',
-    location: '',
+    weight: 0,
+    price: 0,
+    description: '',
   });
+
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   });
+
+  const handleAddClick = () => {
+    setSelectedItem(null);
+    setFormData({
+      itemType: '',
+      karat: '',
+      weight: 0,
+      price: 0,
+      description: '',
+    });
+    setOpenDialog(true);
+  };
+
+  const handleEditClick = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setFormData({
+      itemType: item.itemType,
+      karat: item.karat,
+      weight: item.weight,
+      price: item.price,
+      description: item.description || '',
+    });
+    setOpenDialog(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    deleteInventoryItem(id);
+    setSnackbar({
+      open: true,
+      message: 'Item deleted successfully!',
+      severity: 'success',
+    });
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
+
+  const handleInputChange = (field: keyof Omit<InventoryItem, 'id' | 'location'>) => (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFormData({
+      ...formData,
+      [field]: event.target.value,
+    });
+  };
+
+  const handleSubmit = () => {
+    const itemData = {
+      ...formData,
+      weight: parseFloat(formData.weight as any),
+      price: parseFloat(formData.price as any),
+    };
+
+    if (isNaN(itemData.weight) || isNaN(itemData.price)) {
+      setSnackbar({
+        open: true,
+        message: 'Please enter valid numbers for Weight and Price.',
+        severity: 'error',
+      });
+      return;
+    }
+
+    if (selectedItem) {
+      updateInventoryItem(selectedItem.id, itemData);
+      setSnackbar({
+        open: true,
+        message: 'Item updated successfully!',
+        severity: 'success',
+      });
+    } else {
+      addInventoryItem(itemData);
+      setSnackbar({
+        open: true,
+        message: 'Item added successfully!',
+        severity: 'success',
+      });
+    }
+    handleCloseDialog();
+  };
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -105,134 +142,25 @@ const InventoryManagement: React.FC = () => {
     setPage(0);
   };
 
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
     setPage(0);
-  };
-
-  const handleOpenDialog = (item?: InventoryItem) => {
-    if (item) {
-      setSelectedItem(item);
-      setFormData({
-        ...item,
-        weight: item.weight.toString(),
-        price: item.price.toString(),
-      });
-    } else {
-      setSelectedItem(null);
-      setFormData({
-        name: '',
-        type: '',
-        karat: '',
-        weight: '',
-        price: '',
-        status: 'available',
-        location: '',
-      });
-    }
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setSelectedItem(null);
-    setFormData({
-      name: '',
-      type: '',
-      karat: '',
-      weight: '',
-      price: '',
-      status: 'available',
-      location: '',
-    });
-  };
-
-  const handleInputChange = (field: keyof InventoryItem) => (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [field]: event.target.value,
-    });
-  };
-
-  const generateItemId = (items: InventoryItem[]): string => {
-    const lastItem = items[items.length - 1];
-    if (!lastItem) return '1';
-    
-    const lastId = parseInt(lastItem.id);
-    return (lastId + 1).toString();
-  };
-
-  const handleSubmit = () => {
-    // Validate form data
-    if (!formData.name || !formData.type || !formData.weight || !formData.price || !formData.location) {
-      setSnackbar({
-        open: true,
-        message: 'Please fill in all required fields',
-        severity: 'error',
-      });
-      return;
-    }
-
-    if (selectedItem) {
-      // Update existing item
-      setMockItems(prevItems =>
-        prevItems.map(item =>
-          item.id === selectedItem.id
-            ? {
-                ...item,
-                ...formData,
-                weight: parseFloat(formData.weight as string),
-                price: parseFloat(formData.price as string),
-              }
-            : item
-        )
-      );
-    } else {
-      // Add new item
-      const newItem: InventoryItem = {
-        id: generateItemId(mockItems),
-        name: formData.name!,
-        type: formData.type!,
-        weight: parseFloat(formData.weight as string),
-        price: parseFloat(formData.price as string),
-        status: formData.status as 'available' | 'sold' | 'pending',
-        location: formData.location!,
-      };
-      setMockItems(prevItems => [...prevItems, newItem]);
-    }
-
-    setSnackbar({
-      open: true,
-      message: selectedItem
-        ? 'Item updated successfully'
-        : 'Item added successfully',
-      severity: 'success',
-    });
-
-    handleCloseDialog();
-  };
-
-  const handleDelete = (item: InventoryItem) => {
-    setMockItems(prevItems =>
-      prevItems.filter(i => i.id !== item.id)
-    );
-    setSnackbar({
-      open: true,
-      message: 'Item deleted successfully',
-      severity: 'success',
-    });
   };
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const filteredItems = mockItems.filter((item: InventoryItem) =>
-    Object.values(item).some((value: unknown) =>
-      String(value).toLowerCase().includes(searchQuery.toLowerCase())
-    )
+  const filteredInventory = inventory.filter(
+    (item) =>
+      item.itemType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.karat.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const paginatedInventory = filteredInventory.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
   );
 
   return (
@@ -244,14 +172,10 @@ const InventoryManagement: React.FC = () => {
       <Paper sx={{ p: 3 }}>
         <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <TextField
-            placeholder="Search items..."
+            fullWidth
+            label="Search Inventory"
             value={searchQuery}
-            onChange={handleSearch}
-            InputProps={{
-              startAdornment: (
-                <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
-              ),
-            }}
+            onChange={handleSearchChange}
             sx={{
               width: 300,
               '& .MuiOutlinedInput-root': {
@@ -264,7 +188,7 @@ const InventoryManagement: React.FC = () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog()}
+            onClick={handleAddClick}
             sx={{
               backgroundColor: 'primary.main',
               border: '2px solid transparent',
@@ -282,48 +206,50 @@ const InventoryManagement: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Type</TableCell>
+                <TableCell>Item ID</TableCell>
+                <TableCell>Item Type</TableCell>
                 <TableCell>Karat</TableCell>
                 <TableCell>Weight (g)</TableCell>
-                <TableCell>Price ($)</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Location</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                <TableCell>Price (JD)</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredItems
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.id}</TableCell>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell>{item.type}</TableCell>
-                    <TableCell>{item.karat}</TableCell>
-                    <TableCell>{item.weight}</TableCell>
-                    <TableCell>${item.price.toFixed(2)}</TableCell>
-                    <TableCell>{item.status}</TableCell>
-                    <TableCell>{item.location}</TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenDialog(item)}
-                        title="Edit"
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDelete(item)}
-                        title="Delete"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {paginatedInventory.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.id}</TableCell>
+                  <TableCell>{item.itemType}</TableCell>
+                  <TableCell>{item.karat}</TableCell>
+                  <TableCell>{item.weight.toFixed(2)}</TableCell>
+                  <TableCell>{item.price.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleEditClick(item)}
+                      sx={{
+                        '&:hover': {
+                          border: '2px solid',
+                          borderColor: 'secondary.main',
+                        },
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteClick(item.id)}
+                      sx={{
+                        '&:hover': {
+                          border: '2px solid',
+                          borderColor: 'secondary.main',
+                        },
+                      }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -331,7 +257,7 @@ const InventoryManagement: React.FC = () => {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={filteredItems.length}
+          count={filteredInventory.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
@@ -339,34 +265,16 @@ const InventoryManagement: React.FC = () => {
         />
       </Paper>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {selectedItem ? 'Edit Item' : 'Add New Item'}
-        </DialogTitle>
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>{selectedItem ? 'Edit Item' : 'Add New Item'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Name"
-                value={formData.name}
-                onChange={handleInputChange('name')}
-                required
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: 'secondary.main',
-                    },
-                  },
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Type"
-                value={formData.type}
-                onChange={handleInputChange('type')}
+                label="Item Type"
+                value={formData.itemType}
+                onChange={handleInputChange('itemType')}
                 required
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -382,7 +290,7 @@ const InventoryManagement: React.FC = () => {
                 fullWidth
                 select
                 label="Karat"
-                value={formData.karat || ''}
+                value={formData.karat}
                 onChange={handleInputChange('karat')}
                 required
                 sx={{
@@ -401,7 +309,7 @@ const InventoryManagement: React.FC = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Weight (g)"
@@ -424,7 +332,7 @@ const InventoryManagement: React.FC = () => {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Price ($)"
+                label="Price (JD)"
                 type="number"
                 value={formData.price}
                 onChange={handleInputChange('price')}
@@ -444,17 +352,12 @@ const InventoryManagement: React.FC = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Location"
-                value={formData.location}
-                onChange={handleInputChange('location')}
-                required
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: 'secondary.main',
-                    },
-                  },
-                }}
+                label="Description"
+                value={formData.description}
+                onChange={handleInputChange('description')}
+                multiline
+                rows={4}
+                placeholder="Enter any additional details about the item"
               />
             </Grid>
           </Grid>

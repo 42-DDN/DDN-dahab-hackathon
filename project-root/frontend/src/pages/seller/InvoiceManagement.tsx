@@ -26,59 +26,10 @@ import {
 } from '@mui/icons-material';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-
-interface Invoice {
-  id: string;
-  itemId: string;
-  itemName: string;
-  itemType: string;
-  itemWeight: number;
-  karat: string;
-  pricePerPiece: number;
-  customerName: string;
-  transactionDate: string;
-  totalPrice: number;
-  type: 'buy' | 'sell';
-  manufacturingPrice?: number;
-  tax?: number;
-  status: 'Paid' | 'Pending' | 'Cancelled';
-}
-
-// Mock data for invoices
-const mockInvoices: Invoice[] = [
-  {
-    id: 'INV-001',
-    itemId: 'ITEM-001',
-    itemName: 'Bracelet of the Lion',
-    itemType: 'Bracelet',
-    itemWeight: 25.5,
-    karat: '21K',
-    pricePerPiece: 85.50,
-    customerName: 'John Doe',
-    transactionDate: '2024-03-15',
-    totalPrice: 2180.25,
-    type: 'sell',
-    manufacturingPrice: 500,
-    tax: 150.25,
-    status: 'Paid',
-  },
-  {
-    id: 'INV-002',
-    itemId: 'ITEM-002',
-    itemName: 'Gold Ring',
-    itemType: 'Ring',
-    itemWeight: 10.0,
-    karat: '18K',
-    pricePerPiece: 75.00,
-    customerName: 'Jane Smith',
-    transactionDate: '2024-03-14',
-    totalPrice: 750.00,
-    type: 'buy',
-    status: 'Pending',
-  },
-];
+import { useInvoices, Invoice } from '../../contexts/InvoiceContext';
 
 const InvoiceManagement: React.FC = () => {
+  const { invoices } = useInvoices();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
@@ -114,30 +65,26 @@ const InvoiceManagement: React.FC = () => {
     // Add invoice details
     doc.setFontSize(12);
     doc.text(`Invoice ID: ${invoice.id}`, 20, 40);
-    doc.text(`Date: ${invoice.transactionDate}`, 20, 50);
-    doc.text(`Customer: ${invoice.customerName}`, 20, 60);
-    doc.text(`Type: ${invoice.type.toUpperCase()}`, 20, 70);
+    doc.text(`Date: ${new Date(invoice.date).toLocaleDateString()}`, 20, 50);
+    doc.text(`Type: ${invoice.type.toUpperCase()}`, 20, 60);
 
     // Add item details
     const itemDetails = [
-      ['Item ID', invoice.itemId],
-      ['Item Name', invoice.itemName],
       ['Item Type', invoice.itemType],
-      ['Weight', `${invoice.itemWeight}g`],
-      ['Karat', invoice.karat],
-      ['Price per Piece', `$${invoice.pricePerPiece.toFixed(2)}`],
+      ['Karat', invoice.karat || 'N/A'],
+      ['Weight', `${invoice.weight}g`],
+      ['Price per gram', `${invoice.price.toFixed(2)} JD`],
     ];
 
     if (invoice.type === 'sell') {
       itemDetails.push(
-        ['Manufacturing Price', `$${invoice.manufacturingPrice?.toFixed(2)}`],
-        ['Tax', `$${invoice.tax?.toFixed(2)}`]
+        ['Manufacturing Price', `${invoice.manufacturingPrice?.toFixed(2)} JD`],
+        ['Tax', `${invoice.tax?.toFixed(2)} JD`]
       );
     }
 
-    itemDetails.push(['Total Price', `$${invoice.totalPrice.toFixed(2)}`]);
+    itemDetails.push(['Total Price', `${invoice.totalPrice.toFixed(2)} JD`]);
 
-    // Add table
     (doc as any).autoTable({
       startY: 80,
       head: [['Description', 'Value']],
@@ -160,11 +107,11 @@ const InvoiceManagement: React.FC = () => {
     window.open(doc.output('bloburl'), '_blank');
   };
 
-  const filteredInvoices = mockInvoices.filter(
+  const filteredInvoices = invoices.filter(
     (invoice) =>
       invoice.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.itemName.toLowerCase().includes(searchQuery.toLowerCase())
+      invoice.itemType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invoice.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -189,19 +136,6 @@ const InvoiceManagement: React.FC = () => {
               },
             }}
           />
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: 'primary.main',
-              border: '2px solid transparent',
-              '&:hover': {
-                backgroundColor: 'primary.dark',
-                borderColor: 'secondary.main',
-              },
-            }}
-          >
-            Generate New Invoice
-          </Button>
         </Box>
 
         <TableContainer>
@@ -209,9 +143,8 @@ const InvoiceManagement: React.FC = () => {
             <TableHead>
               <TableRow>
                 <TableCell>Invoice ID</TableCell>
-                <TableCell>Item Name</TableCell>
+                <TableCell>Item Type</TableCell>
                 <TableCell>Type</TableCell>
-                <TableCell>Customer</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell>Total Amount</TableCell>
                 <TableCell>Status</TableCell>
@@ -224,11 +157,10 @@ const InvoiceManagement: React.FC = () => {
                 .map((invoice) => (
                   <TableRow key={invoice.id}>
                     <TableCell>{invoice.id}</TableCell>
-                    <TableCell>{invoice.itemName}</TableCell>
+                    <TableCell>{invoice.itemType}</TableCell>
                     <TableCell>{invoice.type}</TableCell>
-                    <TableCell>{invoice.customerName}</TableCell>
-                    <TableCell>{invoice.transactionDate}</TableCell>
-                    <TableCell>${invoice.totalPrice.toFixed(2)}</TableCell>
+                    <TableCell>{new Date(invoice.date).toLocaleDateString()}</TableCell>
+                    <TableCell>{invoice.totalPrice.toFixed(2)} JD</TableCell>
                     <TableCell>{invoice.status}</TableCell>
                     <TableCell>
                       <IconButton
@@ -299,16 +231,8 @@ const InvoiceManagement: React.FC = () => {
               <Grid item xs={12}>
                 <Typography variant="h6">Invoice #{selectedInvoice.id}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Date: {selectedInvoice.transactionDate}
+                  Date: {new Date(selectedInvoice.date).toLocaleDateString()}
                 </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1">Customer Information</Typography>
-                <Typography>Name: {selectedInvoice.customerName}</Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1">Transaction Type</Typography>
-                <Typography>{selectedInvoice.type.toUpperCase()}</Typography>
               </Grid>
               <Grid item xs={12}>
                 <Typography variant="subtitle1">Item Details</Typography>
@@ -316,44 +240,36 @@ const InvoiceManagement: React.FC = () => {
                   <Table size="small">
                     <TableBody>
                       <TableRow>
-                        <TableCell>Item ID</TableCell>
-                        <TableCell>{selectedInvoice.itemId}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Item Name</TableCell>
-                        <TableCell>{selectedInvoice.itemName}</TableCell>
-                      </TableRow>
-                      <TableRow>
                         <TableCell>Item Type</TableCell>
                         <TableCell>{selectedInvoice.itemType}</TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell>Weight</TableCell>
-                        <TableCell>{selectedInvoice.itemWeight}g</TableCell>
-                      </TableRow>
-                      <TableRow>
                         <TableCell>Karat</TableCell>
-                        <TableCell>{selectedInvoice.karat}</TableCell>
+                        <TableCell>{selectedInvoice.karat || 'N/A'}</TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell>Price per Piece</TableCell>
-                        <TableCell>${selectedInvoice.pricePerPiece.toFixed(2)}</TableCell>
+                        <TableCell>Weight</TableCell>
+                        <TableCell>{selectedInvoice.weight}g</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Price per gram</TableCell>
+                        <TableCell>{selectedInvoice.price.toFixed(2)} JD</TableCell>
                       </TableRow>
                       {selectedInvoice.type === 'sell' && (
                         <>
                           <TableRow>
                             <TableCell>Manufacturing Price</TableCell>
-                            <TableCell>${selectedInvoice.manufacturingPrice?.toFixed(2)}</TableCell>
+                            <TableCell>{selectedInvoice.manufacturingPrice?.toFixed(2)} JD</TableCell>
                           </TableRow>
                           <TableRow>
                             <TableCell>Tax</TableCell>
-                            <TableCell>${selectedInvoice.tax?.toFixed(2)}</TableCell>
+                            <TableCell>{selectedInvoice.tax?.toFixed(2)} JD</TableCell>
                           </TableRow>
                         </>
                       )}
                       <TableRow>
                         <TableCell><strong>Total Price</strong></TableCell>
-                        <TableCell><strong>${selectedInvoice.totalPrice.toFixed(2)}</strong></TableCell>
+                        <TableCell><strong>{selectedInvoice.totalPrice.toFixed(2)} JD</strong></TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>

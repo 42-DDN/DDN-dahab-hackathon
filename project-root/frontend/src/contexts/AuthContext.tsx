@@ -47,8 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(response.user);
       localStorage.setItem('user', JSON.stringify(response.user));
 
-      // Return the path to navigate to
-      return response.user.role === 'admin' ? '/admin' : '/seller/buy';
+      return response.user.role === 'admin' ? '/admin' : '/seller/home';
     } catch (error) {
       throw new Error('Invalid credentials');
     }
