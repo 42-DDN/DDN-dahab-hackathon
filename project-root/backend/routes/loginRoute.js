@@ -1,6 +1,7 @@
 import { Router } from "express";
 import dotenv from "dotenv";
 import { Worker } from "../models/workerSchema.js"; // Assuming you have a Worker model defined
+import { authentication } from "../middleware/authentication";
 dotenv.config();
 const loginRouter = Router();
 
@@ -76,7 +77,7 @@ loginRouter.post("/signup", async (req, res) => {
   }
 });
 
-loginRouter.post("/logout", (req, res) => {
+loginRouter.post("/logout", authentication, (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       return res.status(500).json({ message: "Logout failed" });
