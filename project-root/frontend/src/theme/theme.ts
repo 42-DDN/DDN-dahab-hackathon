@@ -1,13 +1,11 @@
 import { createTheme } from '@mui/material/styles';
 
-// Define the custom colors
 const colors = {
   darkGreen: '#1B4332',
   gold: '#D4AF37',
   white: '#FFFFFF',
 };
 
-// Create the theme
 const theme = createTheme({
   palette: {
     primary: {

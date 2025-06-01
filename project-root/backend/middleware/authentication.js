@@ -1,5 +1,6 @@
 const authentication = (req, res, next) => {
-  if (req.session && req.session.user) {
+	console.log(req.session, req.session.user);
+	if (req.session && req.session.user) {
     next();
   } else {
     res.status(401).json({

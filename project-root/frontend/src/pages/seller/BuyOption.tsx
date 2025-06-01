@@ -12,31 +12,44 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   MenuItem,
 } from '@mui/material';
 import { Print as PrintIcon } from '@mui/icons-material';
+import { useInvoices } from '../../contexts/InvoiceContext';
 
 interface Invoice {
   id: string;
   date: string;
-  type: 'buy' | 'sell';
+  type: 'buy';
   itemType: string;
   karat?: string;
   weight: number;
   price: number;
+  totalPrice: number;
   description: string;
   status: 'pending' | 'completed' | 'cancelled';
+  origin?: string;
+  manufacturingPrice?: number;
 }
 
 const karats = ['14K', '18K', '21K', '24K'];
 
 const BuyOption: React.FC = () => {
+  const { addInvoice } = useInvoices();
   const [formData, setFormData] = useState({
     itemType: '',
     karat: '',
     weight: '',
     price: '',
     description: '',
+    origin: '',
+    manufacturingPrice: '',
   });
 
   const [snackbar, setSnackbar] = useState({
@@ -46,9 +59,9 @@ const BuyOption: React.FC = () => {
   });
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
-  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [openInvoiceDialog, setOpenInvoiceDialog] = useState(false);
 
-  const handleChange = (field: string) => (
+  const handleInputChange = (field: string) => (
     event: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
   ) => {
     setFormData({
@@ -57,18 +70,8 @@ const BuyOption: React.FC = () => {
     });
   };
 
-  const generateInvoice = (price: number): Invoice => {
-    return {
-      id: `INV-${Date.now()}`,
-      date: new Date().toISOString().split('T')[0],
-      type: 'buy',
-      itemType: formData.itemType,
-      karat: formData.karat,
-      weight: parseFloat(formData.weight),
-      price,
-      description: formData.description,
-      status: 'pending',
-    };
+  const calculateTotalPrice = (weight: number, price: number) => {
+    return weight * price;
   };
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -83,13 +86,32 @@ const BuyOption: React.FC = () => {
       return;
     }
 
-    const newInvoice = generateInvoice(parseFloat(formData.price));
-    setInvoice(newInvoice);
-    setInvoiceDialogOpen(true);
+    const weight = parseFloat(formData.weight);
+    const price = parseFloat(formData.price);
+    const manufacturingPrice = parseFloat(formData.manufacturingPrice);
+    const totalPrice = calculateTotalPrice(weight, price);
 
+    const newInvoice: Invoice = {
+      id: `INV${Date.now()}`,
+      date: new Date().toISOString(),
+      type: 'buy',
+      itemType: formData.itemType,
+      karat: formData.karat,
+      weight,
+      price,
+      totalPrice,
+      description: formData.description,
+      origin: formData.origin,
+      manufacturingPrice: isNaN(manufacturingPrice) ? undefined : manufacturingPrice,
+      status: 'pending',
+    };
+
+    addInvoice(newInvoice);
+    setInvoice(newInvoice);
+    setOpenInvoiceDialog(true);
     setSnackbar({
       open: true,
-      message: 'Purchase request submitted successfully',
+      message: 'Buy request submitted successfully',
       severity: 'success',
     });
 
@@ -99,6 +121,8 @@ const BuyOption: React.FC = () => {
       weight: '',
       price: '',
       description: '',
+      origin: '',
+      manufacturingPrice: '',
     }));
   };
 
@@ -106,15 +130,18 @@ const BuyOption: React.FC = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleCloseInvoiceDialog = () => {
+    setOpenInvoiceDialog(false);
+  };
+
   const handlePrintInvoice = () => {
     window.print();
-    setInvoiceDialogOpen(false);
   };
 
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom sx={{ color: 'primary.main' }}>
-        Buy Option
+        Buy Items
       </Typography>
 
       <Paper sx={{ p: 3 }}>
@@ -125,7 +152,7 @@ const BuyOption: React.FC = () => {
                 fullWidth
                 label="Item Type"
                 value={formData.itemType}
-                onChange={handleChange('itemType')}
+                onChange={handleInputChange('itemType')}
                 placeholder="e.g., Ring, Necklace, Bracelet"
                 helperText="Enter the type of item you want to buy"
                 required
@@ -144,7 +171,7 @@ const BuyOption: React.FC = () => {
                 fullWidth
                 label="Karat"
                 value={formData.karat}
-                onChange={handleChange('karat')}
+                onChange={handleInputChange('karat')}
                 required
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -168,7 +195,7 @@ const BuyOption: React.FC = () => {
                 label="Weight (grams)"
                 type="number"
                 value={formData.weight}
-                onChange={handleChange('weight')}
+                onChange={handleInputChange('weight')}
                 InputProps={{
                   inputProps: { min: 0, step: 0.01 }
                 }}
@@ -188,11 +215,46 @@ const BuyOption: React.FC = () => {
                 label="Price per gram (JD)"
                 type="number"
                 value={formData.price}
-                onChange={handleChange('price')}
+                onChange={handleInputChange('price')}
                 InputProps={{
                   inputProps: { min: 0, step: 0.01 }
                 }}
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Origin"
+                value={formData.origin}
+                onChange={handleInputChange('origin')}
+                placeholder="e.g., Jordan, Italy"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Manufacturing Price (JD)"
+                type="number"
+                value={formData.manufacturingPrice}
+                onChange={handleInputChange('manufacturingPrice')}
+                InputProps={{
+                  inputProps: { min: 0, step: 0.01 }
+                }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     '&:hover fieldset': {
@@ -207,10 +269,10 @@ const BuyOption: React.FC = () => {
                 fullWidth
                 label="Description"
                 value={formData.description}
-                onChange={handleChange('description')}
+                onChange={handleInputChange('description')}
                 multiline
                 rows={4}
-                placeholder="Enter any additional details about the item..."
+                placeholder="Enter any additional details about the item"
               />
             </Grid>
             <Grid item xs={12}>
@@ -230,7 +292,7 @@ const BuyOption: React.FC = () => {
                   },
                 }}
               >
-                Submit Purchase Request
+                Submit Buy Request
               </Button>
             </Grid>
           </Grid>
@@ -252,47 +314,52 @@ const BuyOption: React.FC = () => {
       </Snackbar>
 
       <Dialog
-        open={invoiceDialogOpen}
-        onClose={() => setInvoiceDialogOpen(false)}
+        open={openInvoiceDialog}
+        onClose={handleCloseInvoiceDialog}
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Purchase Invoice</DialogTitle>
+        <DialogTitle>Buy Invoice</DialogTitle>
         <DialogContent>
           {invoice && (
-            <Box sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Invoice #{invoice.id}
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Date: {invoice.date}
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Type: {invoice.type.toUpperCase()}
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Karat: {invoice.karat}
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Item: {invoice.itemType}
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Weight: {invoice.weight}g
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Price per gram: {invoice.price.toFixed(2)} JD
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Description: {invoice.description}
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Status: {invoice.status}
-              </Typography>
-            </Box>
+            <TableContainer>
+              <Table>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>Item Type</TableCell>
+                    <TableCell align="right">{invoice.itemType}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Karat</TableCell>
+                    <TableCell align="right">{invoice.karat}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Weight (grams)</TableCell>
+                    <TableCell align="right">{invoice.weight}</TableCell>
+                  </TableRow>
+                   <TableRow>
+                    <TableCell>Origin</TableCell>
+                    <TableCell align="right">{invoice.origin || 'N/A'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Price per gram</TableCell>
+                    <TableCell align="right">{invoice.price.toFixed(2)} JD</TableCell>
+                  </TableRow>
+                   <TableRow>
+                    <TableCell>Manufacturing Price</TableCell>
+                    <TableCell align="right">{invoice.manufacturingPrice?.toFixed(2) || 'N/A'} JD</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell><strong>Total Price</strong></TableCell>
+                    <TableCell align="right"><strong>{invoice.totalPrice.toFixed(2)} JD</strong></TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setInvoiceDialogOpen(false)}>Close</Button>
+          <Button onClick={handleCloseInvoiceDialog}>Close</Button>
           <Button
             onClick={handlePrintInvoice}
             variant="contained"

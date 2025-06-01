@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import { sellerRouter } from "./routes/sellRoute.js";
 import { loginRouter } from "./routes/loginRoute.js";
 import connectDB from "./config/db.js";
@@ -12,6 +13,14 @@ const app = express();
 const PORT = process.env.PORT;
 
 connectDB();
+
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(
@@ -21,11 +30,15 @@ app.use(
       mongoUrl: process.env.MONGO_URI,
       collectionName: "sessions",
     }),
+
     resave: false,
     saveUninitialized: false,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24,
+      httpOnly: false,
+      secure: false,
     },
+    name: "sessionId",
   })
 );
 
