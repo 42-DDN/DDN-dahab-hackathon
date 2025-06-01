@@ -1,4 +1,4 @@
-PROJECT_NAME = hackathon
+PROJECT_NAME = DDN_DAHAB_HACKATHON
 
 up:
 	docker-compose up -d
