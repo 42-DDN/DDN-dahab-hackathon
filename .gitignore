@@ -22,6 +22,7 @@ dist/
 out/
 
 # IDEs and editors
+.obsidian/
 .vscode/
 .idea/
 *.sublime-workspace

@@ -67,6 +67,13 @@ const Settings: React.FC = () => {
               value={settings.companyName}
               onChange={handleChange('companyName')}
               margin="normal"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: 'secondary.main',
+                  },
+                },
+              }}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -77,6 +84,13 @@ const Settings: React.FC = () => {
               value={settings.email}
               onChange={handleChange('email')}
               margin="normal"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: 'secondary.main',
+                  },
+                },
+              }}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -86,6 +100,13 @@ const Settings: React.FC = () => {
               value={settings.phone}
               onChange={handleChange('phone')}
               margin="normal"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: 'secondary.main',
+                  },
+                },
+              }}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -95,6 +116,13 @@ const Settings: React.FC = () => {
               value={settings.address}
               onChange={handleChange('address')}
               margin="normal"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: 'secondary.main',
+                  },
+                },
+              }}
             />
           </Grid>
         </Grid>
@@ -144,9 +172,16 @@ const Settings: React.FC = () => {
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
         <Button
           variant="contained"
-          color="primary"
           onClick={handleSave}
-          size="large"
+          sx={{
+            backgroundColor: 'primary.main',
+            border: '2px solid',
+            borderColor: 'secondary.main',
+            '&:hover': {
+              backgroundColor: 'primary.dark',
+              borderColor: 'secondary.dark',
+            },
+          }}
         >
           Save Changes
         </Button>

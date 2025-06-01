@@ -8,14 +8,39 @@ import {
   Grid,
   Alert,
   Snackbar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 
+interface ManufacturingFees {
+  [key: string]: {
+    manufacturingFee: number;
+    wastageRate: number;
+  };
+}
+
+interface TaxRates {
+  vat: number;
+  customs: number;
+  otherTaxes: number;
+}
+
 const FeesManagement: React.FC = () => {
-  const [fees, setFees] = useState({
-    gold: 100,
-    silver: 80,
-    platinum: 120,
-    diamond: 150,
+  const [manufacturingFees, setManufacturingFees] = useState<ManufacturingFees>({
+    '14K': { manufacturingFee: 5, wastageRate: 2 },
+    '18K': { manufacturingFee: 7, wastageRate: 2.5 },
+    '21K': { manufacturingFee: 9, wastageRate: 3 },
+    '24K': { manufacturingFee: 12, wastageRate: 3.5 },
+  });
+
+  const [taxRates, setTaxRates] = useState<TaxRates>({
+    vat: 15,
+    customs: 5,
+    otherTaxes: 2,
   });
 
   const [snackbar, setSnackbar] = useState({
@@ -24,14 +49,29 @@ const FeesManagement: React.FC = () => {
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   });
 
-  const handleFeeChange = (metal: keyof typeof fees) => (
+  const handleManufacturingFeeChange = (karat: string, field: keyof ManufacturingFees[string]) => (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const value = parseFloat(event.target.value);
     if (!isNaN(value)) {
-      setFees((prev) => ({
+      setManufacturingFees((prev) => ({
         ...prev,
-        [metal]: value,
+        [karat]: {
+          ...prev[karat],
+          [field]: value,
+        },
+      }));
+    }
+  };
+
+  const handleTaxRateChange = (field: keyof TaxRates) => (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = parseFloat(event.target.value);
+    if (!isNaN(value)) {
+      setTaxRates((prev) => ({
+        ...prev,
+        [field]: value,
       }));
     }
   };
@@ -40,7 +80,7 @@ const FeesManagement: React.FC = () => {
     // TODO: Implement API call to save fees
     setSnackbar({
       open: true,
-      message: 'Fees updated successfully',
+      message: 'Fees and tax rates updated successfully',
       severity: 'success',
     });
   };
@@ -52,63 +92,134 @@ const FeesManagement: React.FC = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom sx={{ color: 'primary.main' }}>
-        Fees Management
+        Gold Manufacturing & Tax Management
       </Typography>
+
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Manufacturing Fees by Karat
+        </Typography>
+        <Typography variant="body2" color="text.secondary" paragraph>
+          Set the manufacturing fees, and wastage rates for different gold karats.
+        </Typography>
+
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Karat</TableCell>
+                <TableCell>Manufacturing Fee (%)</TableCell>
+                <TableCell>Wastage Rate (%)</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Object.entries(manufacturingFees).map(([karat, fees]) => (
+                <TableRow key={karat}>
+                  <TableCell>{karat}</TableCell>
+                  <TableCell>
+                    <TextField
+                      type="number"
+                      value={fees.manufacturingFee}
+                      onChange={handleManufacturingFeeChange(karat, 'manufacturingFee')}
+                      InputProps={{
+                        endAdornment: '%',
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&:hover fieldset': {
+                            borderColor: 'secondary.main',
+                          },
+                        },
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <TextField
+                      type="number"
+                      value={fees.wastageRate}
+                      onChange={handleManufacturingFeeChange(karat, 'wastageRate')}
+                      InputProps={{
+                        endAdornment: '%',
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&:hover fieldset': {
+                            borderColor: 'secondary.main',
+                          },
+                        },
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
-          Masn3ya Fees
+          Tax Rates
         </Typography>
         <Typography variant="body2" color="text.secondary" paragraph>
-          Set the masn3ya fees for different types of metals. These fees will be used to calculate the final price of items.
+          Set the tax rates that will be applied to gold manufacturing and sales.
         </Typography>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              label="Gold Masn3ya"
+              label="VAT Rate"
               type="number"
-              value={fees.gold}
-              onChange={handleFeeChange('gold')}
+              value={taxRates.vat}
+              onChange={handleTaxRateChange('vat')}
               InputProps={{
                 endAdornment: '%',
               }}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Silver Masn3ya"
-              type="number"
-              value={fees.silver}
-              onChange={handleFeeChange('silver')}
-              InputProps={{
-                endAdornment: '%',
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: 'secondary.main',
+                  },
+                },
               }}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              label="Platinum Masn3ya"
+              label="Customs Duty"
               type="number"
-              value={fees.platinum}
-              onChange={handleFeeChange('platinum')}
+              value={taxRates.customs}
+              onChange={handleTaxRateChange('customs')}
               InputProps={{
                 endAdornment: '%',
               }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: 'secondary.main',
+                  },
+                },
+              }}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              label="Diamond Masn3ya"
+              label="Other Taxes"
               type="number"
-              value={fees.diamond}
-              onChange={handleFeeChange('diamond')}
+              value={taxRates.otherTaxes}
+              onChange={handleTaxRateChange('otherTaxes')}
               InputProps={{
                 endAdornment: '%',
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: 'secondary.main',
+                  },
+                },
               }}
             />
           </Grid>
@@ -120,8 +231,10 @@ const FeesManagement: React.FC = () => {
             onClick={handleSave}
             sx={{
               backgroundColor: 'primary.main',
+              border: '2px solid transparent',
               '&:hover': {
                 backgroundColor: 'primary.dark',
+                borderColor: 'secondary.main',
               },
             }}
           >

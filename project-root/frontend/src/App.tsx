@@ -74,9 +74,10 @@ const App: React.FC = () => {
             }
           >
             <Route index element={<SellerHome />} />
+            <Route path="home" element={<SellerHome />} />
             <Route path="buy" element={<BuyOption />} />
             <Route path="sell" element={<SellOption />} />
-            <Route path="invoice" element={<InvoiceManagement />} />
+            <Route path="invoices" element={<InvoiceManagement />} />
             <Route path="inventory" element={<Inventory />} />
           </Route>
 

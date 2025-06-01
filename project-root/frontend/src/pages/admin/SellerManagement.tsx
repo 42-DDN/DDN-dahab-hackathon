@@ -239,12 +239,27 @@ const SellerManagement: React.FC = () => {
                 </InputAdornment>
               ),
             }}
-            sx={{ width: 300 }}
+            sx={{
+              width: 300,
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: 'secondary.main',
+                },
+              },
+            }}
           />
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => handleOpenDialog()}
+            sx={{
+              backgroundColor: 'primary.main',
+              border: '2px solid transparent',
+              '&:hover': {
+                backgroundColor: 'primary.dark',
+                borderColor: 'secondary.main',
+              },
+            }}
           >
             Add New Seller
           </Button>
@@ -320,6 +335,13 @@ const SellerManagement: React.FC = () => {
                 onChange={handleInputChange('name')}
                 margin="normal"
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -331,6 +353,13 @@ const SellerManagement: React.FC = () => {
                 onChange={handleInputChange('email')}
                 margin="normal"
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -341,6 +370,13 @@ const SellerManagement: React.FC = () => {
                 onChange={handleInputChange('phone')}
                 margin="normal"
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -365,13 +401,29 @@ const SellerManagement: React.FC = () => {
                     </InputAdornment>
                   ),
                 }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
+          <Button onClick={handleSubmit} variant="contained" color="primary"
+            sx={{
+              backgroundColor: 'primary.main',
+              border: '2px solid transparent',
+              '&:hover': {
+                backgroundColor: 'primary.dark',
+                borderColor: 'secondary.main',
+              },
+            }}
+          >
             {selectedSeller ? 'Update' : 'Add'}
           </Button>
         </DialogActions>

@@ -13,7 +13,6 @@ import {
   IconButton,
   Button,
   TextField,
-  InputAdornment,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -62,7 +61,6 @@ const initialItems: InventoryItem[] = [
   },
 ];
 
-const itemTypes = ['Ring', 'Necklace', 'Earrings', 'Bracelet'];
 const karats = ['14K', '18K', '21K', '24K'];
 
 const InventoryManagement: React.FC = () => {
@@ -254,12 +252,27 @@ const InventoryManagement: React.FC = () => {
                 <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
               ),
             }}
-            sx={{ width: 300 }}
+            sx={{
+              width: 300,
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: 'secondary.main',
+                },
+              },
+            }}
           />
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => handleOpenDialog()}
+            sx={{
+              backgroundColor: 'primary.main',
+              border: '2px solid transparent',
+              '&:hover': {
+                backgroundColor: 'primary.dark',
+                borderColor: 'secondary.main',
+              },
+            }}
           >
             Add New Item
           </Button>
@@ -339,6 +352,13 @@ const InventoryManagement: React.FC = () => {
                 value={formData.name}
                 onChange={handleInputChange('name')}
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -348,6 +368,13 @@ const InventoryManagement: React.FC = () => {
                 value={formData.type}
                 onChange={handleInputChange('type')}
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -358,6 +385,13 @@ const InventoryManagement: React.FC = () => {
                 value={formData.karat || ''}
                 onChange={handleInputChange('karat')}
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               >
                 <MenuItem value="">Select Karat</MenuItem>
                 {karats.map((option) => (
@@ -378,6 +412,13 @@ const InventoryManagement: React.FC = () => {
                   inputProps: { min: 0, step: 0.01 }
                 }}
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -391,6 +432,13 @@ const InventoryManagement: React.FC = () => {
                   inputProps: { min: 0, step: 0.01 }
                 }}
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -400,13 +448,29 @@ const InventoryManagement: React.FC = () => {
                 value={formData.location}
                 onChange={handleInputChange('location')}
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
+          <Button onClick={handleSubmit} variant="contained" color="primary"
+            sx={{
+              backgroundColor: 'primary.main',
+              border: '2px solid transparent',
+              '&:hover': {
+                backgroundColor: 'primary.dark',
+                borderColor: 'secondary.main',
+              },
+            }}
+          >
             {selectedItem ? 'Update' : 'Add'}
           </Button>
         </DialogActions>

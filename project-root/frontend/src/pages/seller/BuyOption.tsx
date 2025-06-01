@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
@@ -28,12 +28,6 @@ interface Invoice {
   status: 'pending' | 'completed' | 'cancelled';
 }
 
-interface GoldPrice {
-  price: number;
-  currency: string;
-  timestamp: string;
-}
-
 const karats = ['14K', '18K', '21K', '24K'];
 
 const BuyOption: React.FC = () => {
@@ -41,6 +35,7 @@ const BuyOption: React.FC = () => {
     itemType: '',
     karat: '',
     weight: '',
+    price: '',
     description: '',
   });
 
@@ -52,35 +47,6 @@ const BuyOption: React.FC = () => {
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
-
-  const [goldPrice, setGoldPrice] = useState<GoldPrice | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchGoldPrice = async () => {
-      if (!formData.karat) return;
-
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await fetch(`YOUR_GOLD_PRICE_API_ENDPOINT?karat=${formData.karat}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch gold price for selected karat');
-        }
-        const data = await response.json();
-        setGoldPrice(data);
-      } catch (err) {
-        setError(`Failed to fetch current gold price for ${formData.karat}. Please try again later.`);
-        console.error('Error fetching karat price:', err);
-        setGoldPrice(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGoldPrice();
-  }, [formData.karat]);
 
   const handleChange = (field: string) => (
     event: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
@@ -108,16 +74,16 @@ const BuyOption: React.FC = () => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!formData.itemType || !formData.karat || !formData.weight || !goldPrice) {
+    if (!formData.itemType || !formData.karat || !formData.weight || !formData.price) {
       setSnackbar({
         open: true,
-        message: 'Please fill in all required fields and ensure gold price is available',
+        message: 'Please fill in all required fields',
         severity: 'error',
       });
       return;
     }
 
-    const newInvoice = generateInvoice(goldPrice.price);
+    const newInvoice = generateInvoice(parseFloat(formData.price));
     setInvoice(newInvoice);
     setInvoiceDialogOpen(true);
 
@@ -131,6 +97,7 @@ const BuyOption: React.FC = () => {
       ...prev,
       itemType: '',
       weight: '',
+      price: '',
       description: '',
     }));
   };
@@ -150,12 +117,6 @@ const BuyOption: React.FC = () => {
         Buy Option
       </Typography>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
       <Paper sx={{ p: 3 }}>
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
@@ -168,6 +129,13 @@ const BuyOption: React.FC = () => {
                 placeholder="e.g., Ring, Necklace, Bracelet"
                 helperText="Enter the type of item you want to buy"
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -178,6 +146,13 @@ const BuyOption: React.FC = () => {
                 value={formData.karat}
                 onChange={handleChange('karat')}
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               >
                 <MenuItem value="">Select Karat</MenuItem>
                 {karats.map((option) => (
@@ -198,15 +173,33 @@ const BuyOption: React.FC = () => {
                   inputProps: { min: 0, step: 0.01 }
                 }}
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label={`Price per gram (${goldPrice?.currency || 'JD'})`}
-                value={loading ? 'Loading...' : goldPrice ? goldPrice.price.toFixed(2) : 'Select Karat to load price'}
-                disabled
-                helperText={goldPrice ? `Last updated: ${new Date(goldPrice.timestamp).toLocaleString()}` : error ? '' : ''}
+                label="Price per gram (JD)"
+                type="number"
+                value={formData.price}
+                onChange={handleChange('price')}
+                InputProps={{
+                  inputProps: { min: 0, step: 0.01 }
+                }}
+                required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -227,7 +220,15 @@ const BuyOption: React.FC = () => {
                 color="primary"
                 size="large"
                 fullWidth
-                disabled={!formData.karat || !formData.weight || !goldPrice || loading}
+                disabled={!formData.karat || !formData.weight || !formData.price}
+                sx={{
+                  backgroundColor: 'primary.main',
+                  border: '2px solid transparent',
+                  '&:hover': {
+                    backgroundColor: 'primary.dark',
+                    borderColor: 'secondary.main',
+                  },
+                }}
               >
                 Submit Purchase Request
               </Button>
@@ -279,7 +280,7 @@ const BuyOption: React.FC = () => {
                 Weight: {invoice.weight}g
               </Typography>
               <Typography variant="body1" paragraph>
-                Price per gram: {invoice.price.toFixed(2)} {goldPrice?.currency || 'JD'}
+                Price per gram: {invoice.price.toFixed(2)} JD
               </Typography>
               <Typography variant="body1" paragraph>
                 Description: {invoice.description}

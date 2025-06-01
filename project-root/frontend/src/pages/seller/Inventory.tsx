@@ -11,7 +11,6 @@ import {
   TableRow,
   TablePagination,
   TextField,
-  InputAdornment,
   IconButton,
   Button,
   Dialog,
@@ -24,7 +23,6 @@ import {
   Snackbar,
 } from '@mui/material';
 import {
-  Search as SearchIcon,
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
@@ -213,13 +211,13 @@ const Inventory: React.FC = () => {
             placeholder="Search inventory..."
             value={searchQuery}
             onChange={handleSearch}
-            sx={{ width: 300 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
+            sx={{
+              width: 300,
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: 'secondary.main',
+                },
+              },
             }}
           />
           <Button
@@ -307,6 +305,13 @@ const Inventory: React.FC = () => {
                 onChange={handleInputChange('name')}
                 margin="normal"
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -317,6 +322,13 @@ const Inventory: React.FC = () => {
                 onChange={handleInputChange('type')}
                 margin="normal"
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -328,6 +340,13 @@ const Inventory: React.FC = () => {
                 onChange={handleInputChange('karat')}
                 margin="normal"
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               >
                 <MenuItem value="">Select Karat</MenuItem>
                 {karats.map((option) => (
@@ -346,6 +365,16 @@ const Inventory: React.FC = () => {
                 onChange={handleInputChange('weight')}
                 margin="normal"
                 required
+                InputProps={{
+                  inputProps: { min: 0, step: 0.01 }
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -357,6 +386,16 @@ const Inventory: React.FC = () => {
                 onChange={handleInputChange('price')}
                 margin="normal"
                 required
+                InputProps={{
+                  inputProps: { min: 0, step: 0.01 }
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
              <Grid item xs={12} sm={6}>
@@ -368,6 +407,13 @@ const Inventory: React.FC = () => {
                 onChange={handleInputChange('status')}
                 margin="normal"
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               >
                  {itemStatuses.map((status) => (
                   <MenuItem key={status} value={status}>
@@ -384,13 +430,31 @@ const Inventory: React.FC = () => {
                 onChange={handleInputChange('location')}
                 margin="normal"
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            sx={{
+              backgroundColor: 'primary.main',
+              border: '2px solid transparent',
+              '&:hover': {
+                backgroundColor: 'primary.dark',
+                borderColor: 'secondary.main',
+              },
+            }}
+          >
             {selectedItem ? 'Update' : 'Add'}
           </Button>
         </DialogActions>

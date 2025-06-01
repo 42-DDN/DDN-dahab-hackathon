@@ -210,7 +210,15 @@ const AdminDashboard: React.FC = () => {
               fullWidth
               variant="contained"
               startIcon={<AddIcon />}
-              sx={{ justifyContent: 'flex-start' }}
+              sx={{
+                justifyContent: 'flex-start',
+                backgroundColor: 'primary.main',
+                border: '2px solid transparent',
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                  borderColor: 'secondary.main',
+                },
+              }}
               onClick={() => handleQuickAction('add-seller')}
             >
               Add New Seller
@@ -221,7 +229,15 @@ const AdminDashboard: React.FC = () => {
               fullWidth
               variant="contained"
               startIcon={<SettingsIcon />}
-              sx={{ justifyContent: 'flex-start' }}
+              sx={{
+                justifyContent: 'flex-start',
+                backgroundColor: 'primary.main',
+                border: '2px solid transparent',
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                  borderColor: 'secondary.main',
+                },
+              }}
               onClick={() => handleQuickAction('modify-fees')}
             >
               Modify Fees
@@ -232,7 +248,15 @@ const AdminDashboard: React.FC = () => {
               fullWidth
               variant="contained"
               startIcon={<InventoryIcon />}
-              sx={{ justifyContent: 'flex-start' }}
+              sx={{
+                justifyContent: 'flex-start',
+                backgroundColor: 'primary.main',
+                border: '2px solid transparent',
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                  borderColor: 'secondary.main',
+                },
+              }}
               onClick={() => handleQuickAction('manage-inventory')}
             >
               Manage Inventory
@@ -243,7 +267,15 @@ const AdminDashboard: React.FC = () => {
               fullWidth
               variant="contained"
               startIcon={<DownloadIcon />}
-              sx={{ justifyContent: 'flex-start' }}
+              sx={{
+                justifyContent: 'flex-start',
+                backgroundColor: 'primary.main',
+                border: '2px solid transparent',
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                  borderColor: 'secondary.main',
+                },
+              }}
               onClick={() => handleQuickAction('export')}
             >
               Export Data

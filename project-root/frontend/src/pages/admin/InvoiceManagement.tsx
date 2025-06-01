@@ -89,6 +89,11 @@ const InvoiceManagement: React.FC = () => {
     console.log('Downloading invoice:', invoice.id);
   };
 
+  const handleGenerateInvoice = () => {
+    // TODO: Implement generate invoice functionality
+    console.log('Generating invoice');
+  };
+
   const filteredInvoices = mockInvoices.filter((invoice) =>
     Object.values(invoice).some((value) =>
       value.toString().toLowerCase().includes(searchQuery.toLowerCase())
@@ -229,6 +234,21 @@ const InvoiceManagement: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Button
+        variant="contained"
+        onClick={() => handleGenerateInvoice()}
+        sx={{
+          backgroundColor: 'primary.main',
+          border: '2px solid transparent',
+          '&:hover': {
+            backgroundColor: 'primary.dark',
+            borderColor: 'secondary.main',
+          },
+        }}
+      >
+        Generate Invoice
+      </Button>
     </Box>
   );
 };

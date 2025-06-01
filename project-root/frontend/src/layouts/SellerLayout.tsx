@@ -16,9 +16,11 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon,
+  Home as HomeIcon,
   ShoppingCart as BuyIcon,
   Store as SellIcon,
   Inventory as InventoryIcon,
+  Receipt as InvoiceIcon,
   Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
@@ -36,9 +38,11 @@ const SellerLayout: React.FC = () => {
   };
 
   const menuItems = [
+    { text: 'Home', icon: <HomeIcon />, path: '/seller/home' },
     { text: 'Buy Option', icon: <BuyIcon />, path: '/seller/buy' },
     { text: 'Sell Option', icon: <SellIcon />, path: '/seller/sell' },
     { text: 'Inventory', icon: <InventoryIcon />, path: '/seller/inventory' },
+    { text: 'Invoices', icon: <InvoiceIcon />, path: '/seller/invoices' },
   ];
 
   const drawer = (
