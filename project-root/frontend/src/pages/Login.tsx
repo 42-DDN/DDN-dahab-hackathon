@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import {
   Box,
   Paper,
@@ -23,13 +24,20 @@ const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const API_BASE_URL = 'http://localhost:3200';
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const usernameWithRole = `${loginType}_${username}`;
+      const loginEndpoint = `${API_BASE_URL}/api/auth/login`;
+			console.log(loginEndpoint)
+			const response = await axios.post(loginEndpoint, {
+        email: username,
+        password: password,
+      });
+      const usernameWithRole = `${response.data["user"]["role"]}_${username}`;
       const path = await login(usernameWithRole, password);
       navigate(path);
     } catch (err) {
