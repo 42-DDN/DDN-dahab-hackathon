@@ -1,6 +1,6 @@
 import Transaction from "../models/transactionSchema.js";
 import Item from "../models/itemSchema.js";
-import dotenv from "dotenv";
+import Worker from "../models/workerSchema.js";
 
 dotenv.config();
 
@@ -46,9 +46,17 @@ const transactionProcessor = async (req, res) => {
       paymentType: paymentMethod,
       tax,
       goldPrice,
-      sellerInfo: req.session.user.id,
       totalPrice: totalPrice,
     });
+
+    const worker = await Worker.findById(req.session.user.id);
+    if (!worker) {
+      return res.status(404).json({
+        message: "Worker not found",
+      });
+    }
+    worker.transactions.push(transaction._id);
+    await worker.save();
     await transaction.save();
     return res.status(200).json({
       message: "Transaction successful",
