@@ -8,7 +8,8 @@ const login = async (req, res) => {
 
   if (email === "admin@admin.com" && password === process.env.ADMIN_PASSWORD) {
     req.session.user = { email, role: "admin" };
-    return res
+    req.session.save();
+	  return res
       .status(200)
       .json({ message: "Login successful", user: req.session.user });
   }
@@ -27,6 +28,7 @@ const login = async (req, res) => {
     if (user.role !== "seller") {
       return res.status(403).json({ message: "Access denied. Not a seller." });
     }
+	      req.session.save();
     req.session.user = { id: user.id, role: "seller" };
     return res
       .status(200)
