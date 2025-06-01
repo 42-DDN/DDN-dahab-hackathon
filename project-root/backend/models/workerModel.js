@@ -36,12 +36,5 @@ const workerSchema = new mongoose.Schema({
   ],
 });
 
-// workerSchema.pre("save", (next) =>
-// {
-//   if (this.role === "admin")
-//   {
-//     if ()
-//   }
-// }
 const Worker = mongoose.model("Worker", workerSchema);
 export default Worker;

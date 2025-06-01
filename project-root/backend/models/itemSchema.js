@@ -1,10 +1,41 @@
 import mongoose from "mongoose";
 
-// const soldItemSchema = new mongoose.Schema({
-//     _id:{
-//         type: mongoose.Schema.Types.ObjectId,
-//         default: new mongoose.Types.ObjectId(),
-//     }
-//     type:{}
+const ItemSchema = new mongoose.Schema({
+  _id: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: new mongoose.Types.ObjectId(),
+  },
+  category: {
+    type: String,
+    required: true,
+  },
+  type: {
+    type: String,
+    required: true,
+  },
+  karat: {
+    type: String,
+    required: true,
+    enum: ["24k", "21k", "18k", "14k"],
+  },
+  weight: {
+    type: Number,
+    required: true,
+  },
+  origin: {
+    type: String,
+    required: true,
+  },
+  buyPrice: {
+    type: Number,
+    required: true,
+  },
+  sellerInfo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Worker",
+    required: true,
+  },
+});
 
-// });
+const Item = mongoose.model("Item", ItemSchema);
+export default Item;
