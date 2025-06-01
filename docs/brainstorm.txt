@@ -1,8 +1,23 @@
-AINSTORMING
+BRAINSTORMING
 qr encoded item data
 AI to calculate possible future demand and recommendations based on previous sale data and whats available inhouse
 warehouse
 data view
+
+#####
+DEMO FLOW
+ -SHOWCASE SURVEY RESULTS(YOUSEF)
+ -BASED ON RESULTS,SHOWCASE DECESIONS MADE
+ -BASED ON DECESIONS,SHOWCASE TECHNOLGOIES(YOUSEF -->BASIL)
+	-QUICK RUN THROUGH DATABASE (BASIL)
+	-QUICK RUN THROUGH BACKEND (BASIL--> AMMAR)
+		-**NEEDS BASIL TO BE THEERE
+	-QUICK RUNTHROUCK DEPLOYMENT(AMMAR-->M7MD) (devops solutions in the title to make m7md happy)
+		-microserviceasd
+		-dockeraizton
+		-cloud based
+ -!!!!!WASTE NO TIME, STRAIGHT TO THE MVP.!!!!!
+
 
 ###DOCUMENTATION
 possible printed document per judge:
