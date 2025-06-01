@@ -71,7 +71,7 @@ This API uses session-based authentication. After logging in, the session cookie
 
 **Error Responses:**
 
-- `400` - All fields are required  
+- `400` - All fields are required
 - `401` - Invalid credentials
 - `403` - Access denied. Not a seller
 - `404` - User not found
