@@ -85,6 +85,9 @@ The system will make use of microservices and cloud hosting to allow sellers to 
 * **Transaction Data Entry**
 
   * Manual entry/edit if needed
+* **Invoice Generation**
+  * Generate and print invoices
+  * Include seller ID, customer info, item details, total price, and date
 
 ## 4. External Interface Requirements
 
@@ -112,15 +115,15 @@ The system will make use of microservices and cloud hosting to allow sellers to 
 
 #### ADMIN
 
-* ID
+* ID (PK)
 * Name
 * Email
 * Role
-* Password (hashed)
+* Password (hashed) ((we are aware this is still not secure, but this is an MVP))
 
 #### SELLER
 
-* ID
+* ID (PK)
 * Name
 * Email
 * Role
@@ -152,34 +155,48 @@ The system will make use of microservices and cloud hosting to allow sellers to 
 * Invoice ID (FK)
 * Current Tax
 
-#### INVOICE
-
-* Invoice ID (PK)
-* Item Name (FK)
-* Item ID (FK)
-* Weight (FK)
-* Date of Sale (FK)
-* Total Price ((weight * real-time price) + msn3ya)
-* Total Price after Tax
-
 ## 6. Future roadmap
-## 	A. AI Module
+## 	A. AI model
 
 * Analyze historical transactions
 * Predict demand spikes
 * Recommend pricing adjustments
 
-## B. Appendix (yousef remember to remove this if you dont have time)
+# Appendix
 
-### Sample Survey Questions (for presentation)
+### requirment elicitation
 
-* How often do you update prices?
+#### We shall conduct surveys with gold stores to gather information on their current practices, challenges, and needs. The survey will include the questions:
+* How many times a day do you fetch and update market prices?
 * What is your msn3ya? (to calculate market avg.)
-* What karat is most commonly sold?
-* Do you raise seller fees during sales surges?
-* What features do you want in a POS?
-* What should invoices include?
-
+* how often do you change it?
+* Do you surge msn3ya based on seasonal demand?
+	- if yes, by how much?
+* how do you currently track sales and inventory?
+	- paper records
+	- software (pos)
+	- if not using software, why?
+* What methods do you use to track inventory?
+	- QR/bar code
+	- Manual entry
+	- Other (please specify)
+* if present, which of these features would you use in a POS?
+	 - Real-time price updates
+	 - daily/weekly/monthly reports
+	 - alerts for low-stock items
+	 - would you rely on a QR/barcode system for inventory tracking?
+	 - easy adjustment of msn3ya
+	 - ability to export data to Excel
+* Do your invoices include:
+	- Seller name/id who authorized transaction
+	- Customer name
+	- Customer contact info
+	- tax rate
+	- msn3ya
+	- market rate at time of sale
+* Do you want to track customer data?
+* Do Customers usually request digital invoices?
+* if currently using software, what do you dislike about it?
 ---
 
 This SRS will serve as a baseline for further design, development, and evaluation of the POS system.
