@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
-import { sellerRouter } from "./routes/sellerRoute.js";
-import { adminRouter } from "./routes/adminRoute.js";
+import { sellerRouter } from "./routes/sellRoute.js";
+import { adminRouter } from "./routes/loginRoute.js";
 import connectDB from "./config/db.js";
 dotenv.config();
 const app = express();
