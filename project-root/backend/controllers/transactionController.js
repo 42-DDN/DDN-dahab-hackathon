@@ -1,6 +1,7 @@
 import Transaction from "../models/transactionSchema.js";
 import Item from "../models/itemSchema.js";
 import Worker from "../models/workerSchema.js";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -15,12 +16,19 @@ const transactionProcessor = async (req, res) => {
 
   try {
     for (const id of itemIds) {
-      const item = await Item.findById(id);
+      const item = await Item.findById({ _id: id });
       if (!item) {
         return res.status(404).json({
           message: `Item not found for ID: ${id}`,
         });
       }
+      if (item.sold) {
+        return res.status(400).json({
+          message: `Item already sold for ID: ${id}`,
+        });
+      }
+      item.sold = true;
+      await item.save();
     }
 
     if (!paymentMethod || typeof paymentMethod !== "string") {
@@ -73,4 +81,15 @@ const transactionProcessor = async (req, res) => {
   }
 };
 
-export { transactionProcessor };
+const getAllTransactions = async (req, res) => {
+  try {
+    const transactions = await Transaction.find().populate("soldItems");
+    return res.status(200).json(transactions);
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+export { transactionProcessor, getAllTransactions };

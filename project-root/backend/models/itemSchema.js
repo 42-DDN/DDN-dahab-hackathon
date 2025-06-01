@@ -35,6 +35,10 @@ const ItemSchema = new mongoose.Schema({
     ref: "Worker",
     required: true,
   },
+  sold: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const Item = mongoose.model("Item", ItemSchema);

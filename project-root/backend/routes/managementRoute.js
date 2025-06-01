@@ -1,7 +1,10 @@
 import { Router } from "express";
 import Item from "../models/itemSchema.js";
 const managementRouter = Router();
-import { authentication } from "../middleware/authentication.js";
+import {
+  adminAuthentication,
+  authentication,
+} from "../middleware/authentication.js";
 import {
   getallItems,
   getItem,
@@ -18,7 +21,7 @@ managementRouter.get("/", (req, res) => {
 
 managementRouter.post("/getitem", authentication, getItem);
 
-managementRouter.post("/newitem", authentication, newItem);
+managementRouter.post("/newitem", adminAuthentication, newItem);
 
 managementRouter.get("/getallitems", authentication, getallItems);
 

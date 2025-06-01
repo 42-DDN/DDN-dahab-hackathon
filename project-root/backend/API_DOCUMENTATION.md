@@ -151,6 +151,64 @@ This API uses session-based authentication. After logging in, the session cookie
 }
 ```
 
+### 2. Process Transaction
+
+- **URL:** `/api/seller/transaction`
+- **Method:** `POST`
+- **Auth Required:** Yes (Session required)
+- **Description:** Processes a gold transaction with multiple items
+
+**Request Body:**
+
+```json
+{
+  "itemIds": [
+    "66f1a2b3c4d5e6f7a8b9c0d1",
+    "66f1a2b3c4d5e6f7a8b9c0d2",
+    "66f1a2b3c4d5e6f7a8b9c0d3"
+  ],
+  "paymentMethod": "cash",
+  "tax": 15.5,
+  "goldPrice": 65.5,
+  "totalPrice": 1500.75
+}
+```
+
+**Request Parameters:**
+
+- `itemIds`: Array of item ObjectIds (required)
+- `paymentMethod`: String (required) - Payment type (e.g., "cash", "card", "bank transfer")
+- `tax`: Number (required) - Tax amount, must be >= 0
+- `goldPrice`: Number (required) - Current gold price per gram, must be >= 0
+- `totalPrice`: Number (optional) - Total transaction amount
+
+**Success Response:**
+
+```json
+{
+  "message": "Transaction successful",
+  "itemIds": [
+    "66f1a2b3c4d5e6f7a8b9c0d1",
+    "66f1a2b3c4d5e6f7a8b9c0d2",
+    "66f1a2b3c4d5e6f7a8b9c0d3"
+  ],
+  "paymentType": "cash",
+  "tax": 15.5,
+  "goldPrice": 65.5
+}
+```
+
+**Error Responses:**
+
+- `400` - Invalid or missing item IDs (must be non-empty array)
+- `400` - Invalid or missing payment method
+- `400` - Invalid or missing tax (must be number >= 0)
+- `400` - Invalid or missing gold price (must be number >= 0)
+- `401` - Unauthorized (session required)
+- `404` - Item not found for one of the provided IDs
+- `404` - Worker not found (session user not found)
+- `500` - Internal server error
+
 ---
 
 ## Management Endpoints (`/api/management`)
@@ -328,12 +386,13 @@ This API uses session-based authentication. After logging in, the session cookie
 ```json
 {
   "_id": "ObjectId",
-  "dateOfSale": "Date (default: now)",
-  "goldPrice": "Number (required)",
-  "paymentType": "String (enum: ['cash', 'card', 'bank transfer'], required)",
   "soldItems": ["ObjectId (ref: Item, required)"],
-  "tax": "Number (required)",
-  "totalPrice": "Number (required)"
+  "paymentType": "String (required)",
+  "tax": "Number (required, min: 0)",
+  "goldPrice": "Number (required, min: 0)",
+  "totalPrice": "Number",
+  "createdAt": "Date (default: now)",
+  "updatedAt": "Date (default: now)"
 }
 ```
 
@@ -411,4 +470,22 @@ curl -X POST http://localhost:3200/api/management/newitem \
 ```bash
 curl -X GET http://localhost:3200/api/management/getallitems \
   -H "Cookie: connect.sid=your-session-cookie"
+```
+
+### Process Transaction
+
+```bash
+curl -X POST http://localhost:3200/api/seller/transaction \
+  -H "Content-Type: application/json" \
+  -H "Cookie: connect.sid=your-session-cookie" \
+  -d '{
+    "itemIds": [
+      "66f1a2b3c4d5e6f7a8b9c0d1",
+      "66f1a2b3c4d5e6f7a8b9c0d2"
+    ],
+    "paymentMethod": "cash",
+    "tax": 15.5,
+    "goldPrice": 65.50,
+    "totalPrice": 1500.75
+  }'
 ```
