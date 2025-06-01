@@ -18,6 +18,10 @@ const ItemSchema = new mongoose.Schema({
     required: true,
     enum: ["24k", "21k", "18k", "14k"],
   },
+  manufacturePrice: {
+    type: Number,
+    required: true,
+  },
   weight: {
     type: Number,
     required: true,

@@ -18,7 +18,6 @@
     "express-session": "^1.18.1",
     "express-validator": "^7.2.1",
     "mongodb": "^6.16.0",
-    "mongoose": "^8.15.1",
-    "pg-promise": "^11.13.0"
+    "mongoose": "^8.15.1"
   }
 }

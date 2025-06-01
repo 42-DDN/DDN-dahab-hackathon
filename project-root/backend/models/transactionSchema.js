@@ -13,10 +13,6 @@ const transcationSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  manufacturePrice: {
-    type: Number,
-    required: true,
-  },
   paymentType: {
     type: String,
     enum: ["cash", "card", "bank transfer"],
