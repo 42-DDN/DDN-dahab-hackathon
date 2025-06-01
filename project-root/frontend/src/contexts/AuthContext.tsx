@@ -53,12 +53,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Invalid credentials');
     }
   };
-  const API_BASE_URL = 'http://13.48.209.147:5200';
+  const API_BASE_URL = 'http://localhost:5200';
   const logout = async () => {
     setUser(null);
     localStorage.removeItem('user');
     try {
-        await axios.post(`${API_BASE_URL}/api/auth/logout`);
+        await axios.get(`${API_BASE_URL}/api/auth/logout`);
     } catch (error) {
         console.error('Error logging out on the server: ', error);
     }

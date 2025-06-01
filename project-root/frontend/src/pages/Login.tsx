@@ -24,7 +24,7 @@ const Login: React.FC = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
 
-    const API_BASE_URL = 'http://13.48.209.147:5200';
+    const API_BASE_URL = 'http://localhost:5200';
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
