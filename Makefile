@@ -20,6 +20,9 @@ shell-backend:
 shell-frontend:
 	docker exec -it frontend sh
 
+shell-backend:
+	docker exec -it frontend sh
+
 shell-features:
 	docker exec -it features sh
 
