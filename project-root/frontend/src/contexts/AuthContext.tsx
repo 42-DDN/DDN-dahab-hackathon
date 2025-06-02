@@ -58,7 +58,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     localStorage.removeItem('user');
     try {
-        await axios.get(`${API_BASE_URL}/api/auth/logout`);
+        await axios.get(`${API_BASE_URL}/api/auth/logout`, {
+          withCredentials: true
+        });
     } catch (error) {
         console.error('Error logging out on the server: ', error);
     }

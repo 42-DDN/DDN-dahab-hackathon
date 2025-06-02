@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -21,25 +21,37 @@ import {
   MenuItem,
   Alert,
   Snackbar,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { useInventory, InventoryItem } from '../../contexts/InventoryContext';
+import axios from '../../config/axios';
 
 const karats = ['14K', '18K', '21K', '24K'];
 
-const InventoryManagement: React.FC = () => {
-  const { inventory, addInventoryItem, updateInventoryItem, deleteInventoryItem } = useInventory();
+interface InventoryItem {
+  id: string;
+  itemType: string;
+  karat: string;
+  weight: number;
+  price: number;
+  description?: string;
+  origin?: string;
+  manufacturePrice?: number;
+}
 
+const InventoryManagement: React.FC = () => {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
-  const [formData, setFormData] = useState<Omit<InventoryItem, 'id' | 'location'>>({
+  const [formData, setFormData] = useState<Omit<InventoryItem, 'id'>>({
     itemType: '',
     karat: '',
     weight: 0,
@@ -52,6 +64,43 @@ const InventoryManagement: React.FC = () => {
     message: '',
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   });
+
+  // Fetch all items from backend
+  const fetchInventory = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/management/getallitems');
+      console.log('Fetched inventory:', response.data);
+      
+      // Transform backend data to match frontend interface
+      const transformedData = response.data.map((item: any) => ({
+        id: item.id || item._id,
+        itemType: item.type || item.itemType,
+        karat: item.karat,
+        weight: item.weight,
+        price: item.buyPrice || item.price,
+        description: item.description || '',
+        origin: item.origin || '',
+        manufacturePrice: item.manufacturePrice || 0,
+      }));
+      
+      setInventory(transformedData);
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch inventory items',
+        severity: 'error',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch inventory on component mount
+  useEffect(() => {
+    fetchInventory();
+  }, []);
 
   const handleAddClick = () => {
     setSelectedItem(null);
@@ -77,20 +126,34 @@ const InventoryManagement: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleDeleteClick = (id: string) => {
-    deleteInventoryItem(id);
-    setSnackbar({
-      open: true,
-      message: 'Item deleted successfully!',
-      severity: 'success',
-    });
+  const handleDeleteClick = async (id: string) => {
+    try {
+      await axios.delete(`/api/management/deleteitem/${id}`);
+      
+      // Refresh inventory after deletion
+      await fetchInventory();
+      
+      setSnackbar({
+        open: true,
+        message: 'Item deleted successfully!',
+        severity: 'success',
+      });
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to delete item',
+        severity: 'error',
+      });
+    }
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
+    setSelectedItem(null);
   };
 
-  const handleInputChange = (field: keyof Omit<InventoryItem, 'id' | 'location'>) => (
+  const handleInputChange = (field: keyof Omit<InventoryItem, 'id'>) => (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setFormData({
@@ -99,7 +162,7 @@ const InventoryManagement: React.FC = () => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const itemData = {
       ...formData,
       weight: parseFloat(formData.weight as any),
@@ -115,22 +178,56 @@ const InventoryManagement: React.FC = () => {
       return;
     }
 
-    if (selectedItem) {
-      updateInventoryItem(selectedItem.id, itemData);
+    try {
+      if (selectedItem) {
+        // Update existing item
+        const updateData = {
+          type: itemData.itemType,
+          karat: itemData.karat,
+          weight: itemData.weight,
+          buyPrice: itemData.price,
+          description: itemData.description,
+        };
+
+        await axios.put(`/api/management/updateitem/${selectedItem.id}`, updateData);
+        
+        setSnackbar({
+          open: true,
+          message: 'Item updated successfully!',
+          severity: 'success',
+        });
+      } else {
+        // Create new item
+        const itemAPI = {
+          type: itemData.itemType,
+          karat: itemData.karat,
+          weight: itemData.weight,
+          buyPrice: itemData.price,
+          origin: "local",
+          manufacturePrice: 200,
+          description: itemData.description,
+        };
+
+        await axios.post('/api/management/newitem', itemAPI);
+        
+        setSnackbar({
+          open: true,
+          message: 'Item added successfully!',
+          severity: 'success',
+        });
+      }
+
+      // Refresh inventory after add/update
+      await fetchInventory();
+      handleCloseDialog();
+    } catch (error) {
+      console.error('Error submitting item:', error);
       setSnackbar({
         open: true,
-        message: 'Item updated successfully!',
-        severity: 'success',
-      });
-    } else {
-      addInventoryItem(itemData);
-      setSnackbar({
-        open: true,
-        message: 'Item added successfully!',
-        severity: 'success',
+        message: 'Failed to save item. Please try again.',
+        severity: 'error',
       });
     }
-    handleCloseDialog();
   };
 
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -162,6 +259,14 @@ const InventoryManagement: React.FC = () => {
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 3, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -211,6 +316,7 @@ const InventoryManagement: React.FC = () => {
                 <TableCell>Karat</TableCell>
                 <TableCell>Weight (g)</TableCell>
                 <TableCell>Price (JD)</TableCell>
+                <TableCell>Description</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -222,6 +328,7 @@ const InventoryManagement: React.FC = () => {
                   <TableCell>{item.karat}</TableCell>
                   <TableCell>{item.weight.toFixed(2)}</TableCell>
                   <TableCell>{item.price.toFixed(2)}</TableCell>
+                  <TableCell>{item.description || '-'}</TableCell>
                   <TableCell>
                     <IconButton
                       size="small"
@@ -265,7 +372,7 @@ const InventoryManagement: React.FC = () => {
         />
       </Paper>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>{selectedItem ? 'Edit Item' : 'Add New Item'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -358,6 +465,13 @@ const InventoryManagement: React.FC = () => {
                 multiline
                 rows={4}
                 placeholder="Enter any additional details about the item"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
               />
             </Grid>
           </Grid>
@@ -396,4 +510,4 @@ const InventoryManagement: React.FC = () => {
   );
 };
 
-export default InventoryManagement; 
+export default InventoryManagement;

@@ -35,6 +35,8 @@ const Login: React.FC = () => {
             const response = await axios.post(loginEndpoint, {
                 email: username,
                 password: password,
+            }, {
+                withCredentials: true
             });
             const usernameWithRole = `${response.data["user"]["role"]}_${username}`;
             const path = await login(usernameWithRole, password);
