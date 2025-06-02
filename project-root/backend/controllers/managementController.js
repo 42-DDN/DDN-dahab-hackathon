@@ -23,6 +23,7 @@ const getItem = async (req, res) => {
 const newItem = async (req, res) => {
   const { type, karat, weight, origin, buyPrice, manufacturePrice } = req.body;
   const sellerInfo = req.session.user.id;
+  console.log(req.body, sellerInfo);
   if (
     !type ||
     !karat ||
@@ -44,6 +45,10 @@ const newItem = async (req, res) => {
       manufacturePrice,
       sellerInfo,
     });
+    const checkitem = await Item.findById(newItem._id);
+    if (checkitem) {
+      return res.status(409).json({ message: "Item already exists." });
+    }
     await newItem.save();
     res.status(201).json(newItem);
   } catch (error) {
@@ -61,4 +66,14 @@ const getallItems = async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 };
-export { getItem, newItem, getallItems };
+
+const getAllSellers = async (req, res) => {
+  try {
+    const sellers = await Worker.find({ role: "seller" }, "name email");
+    res.status(200).json(sellers);
+  } catch (error) {
+    console.error("Error fetching sellers:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+export { getItem, newItem, getallItems, getAllSellers };

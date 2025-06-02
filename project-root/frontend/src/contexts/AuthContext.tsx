@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
 interface User {
   id: string;
@@ -10,7 +11,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (username: string, password: string) => Promise<string>;
-  logout: () => string;
+  logout: () => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -52,10 +53,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Invalid credentials');
     }
   };
-
-  const logout = () => {
+  const API_BASE_URL = 'http://localhost:5200';
+  const logout = async () => {
     setUser(null);
     localStorage.removeItem('user');
+    try {
+        await axios.get(`${API_BASE_URL}/api/auth/logout`, {
+          withCredentials: true
+        });
+    } catch (error) {
+        console.error('Error logging out on the server: ', error);
+    }
     return '/login';
   };
 

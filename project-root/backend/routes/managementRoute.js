@@ -9,6 +9,7 @@ import {
   getallItems,
   getItem,
   newItem,
+  getAllSellers,
 } from "../controllers/managementController.js";
 
 managementRouter.get("/", (req, res) => {
@@ -21,8 +22,9 @@ managementRouter.get("/", (req, res) => {
 
 managementRouter.post("/getitem", authentication, getItem);
 
-managementRouter.post("/newitem", adminAuthentication, newItem);
+managementRouter.post("/newitem", authentication, newItem);
 
 managementRouter.get("/getallitems", authentication, getallItems);
 
+managementRouter.get("/getallsellers", authentication, getAllSellers);
 export { managementRouter };

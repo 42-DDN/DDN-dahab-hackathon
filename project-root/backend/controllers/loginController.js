@@ -6,13 +6,6 @@ dotenv.config();
 const login = async (req, res) => {
   const { email, password } = req.body;
 
-  if (email === "admin@admin.com" && password === process.env.ADMIN_PASSWORD) {
-    req.session.user = { email, role: "admin" };
-    return res
-      .status(200)
-      .json({ message: "Login successful", user: req.session.user });
-  }
-
   try {
     const user = await Worker.findOne({ email });
     if (!user) {
@@ -23,11 +16,18 @@ const login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-
+    if (user.email === "admin@admin.com") {
+      req.session.user = { id: user.id, email, role: "admin" };
+      req.session.save();
+      return res
+        .status(200)
+        .json({ message: "Login successful", user: req.session.user });
+    }
     if (user.role !== "seller") {
       return res.status(403).json({ message: "Access denied. Not a seller." });
     }
     req.session.user = { id: user.id, role: "seller" };
+    req.session.save();
     return res
       .status(200)
       .json({ message: "Login successful", user: req.session.user });
@@ -40,7 +40,7 @@ const login = async (req, res) => {
 const signup = async (req, res) => {
   const { name, email, password, role } = req.body;
 
-  if (!name || !email || !password || !role) {
+  if (!name || !email || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
