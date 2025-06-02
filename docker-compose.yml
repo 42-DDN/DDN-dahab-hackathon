@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./project-root/frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+
+  features:
+    build: ./project-root/features
+    container_name: features
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+
+  backend:
+    build:
+      context: ./project-root/backend
+      dockerfile: Dockerfile
+    container_name: ddn-backend
+    ports:
+      - "5200:5200"
+    networks:
+      - app-network
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb+srv://basilaismail11:ddngold123@ddngold.molj5pm.mongodb.net/?retryWrites=true&w=majority&appName=DDNGold
+
+networks:
+  app-network:
+    driver: bridge
