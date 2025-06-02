@@ -1,0 +1,41 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# dotenv environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# React build output
+build/
+dist/
+
+# Optional cache folders
+.cache/
+.next/
+out/
+
+# IDEs and editors
+.obsidian/
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# MongoDB local database dumps or temp files
+dump/
+*.mongodb
+
+# Logs
+logs/
+*.log
